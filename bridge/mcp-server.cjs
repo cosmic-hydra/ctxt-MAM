@@ -16505,7 +16505,7 @@ var Protocol = class {
     const capturedTransport = this._transport;
     const relatedTaskId = request.params?._meta?.[RELATED_TASK_META_KEY]?.taskId;
     if (handler === void 0) {
-      const errorResponse2 = {
+      const errorResponse3 = {
         jsonrpc: "2.0",
         id: request.id,
         error: {
@@ -16516,11 +16516,11 @@ var Protocol = class {
       if (relatedTaskId && this._taskMessageQueue) {
         this._enqueueTaskMessage(relatedTaskId, {
           type: "error",
-          message: errorResponse2,
+          message: errorResponse3,
           timestamp: Date.now()
         }, capturedTransport?.sessionId).catch((error2) => this._onerror(new Error(`Failed to enqueue error response: ${error2}`)));
       } else {
-        capturedTransport?.send(errorResponse2).catch((error2) => this._onerror(new Error(`Failed to send an error response: ${error2}`)));
+        capturedTransport?.send(errorResponse3).catch((error2) => this._onerror(new Error(`Failed to send an error response: ${error2}`)));
       }
       return;
     }
@@ -16590,7 +16590,7 @@ var Protocol = class {
       if (abortController.signal.aborted) {
         return;
       }
-      const errorResponse2 = {
+      const errorResponse3 = {
         jsonrpc: "2.0",
         id: request.id,
         error: {
@@ -16602,11 +16602,11 @@ var Protocol = class {
       if (relatedTaskId && this._taskMessageQueue) {
         await this._enqueueTaskMessage(relatedTaskId, {
           type: "error",
-          message: errorResponse2,
+          message: errorResponse3,
           timestamp: Date.now()
         }, capturedTransport?.sessionId);
       } else {
-        await capturedTransport?.send(errorResponse2);
+        await capturedTransport?.send(errorResponse3);
       }
     }).catch((error2) => this._onerror(new Error(`Failed to send response: ${error2}`))).finally(() => {
       this._requestHandlerAbortControllers.delete(request.id);
@@ -27019,6 +27019,553 @@ var sharedMemoryTools = [
   sharedMemoryCleanupTool
 ];
 
+// src/lib/shared-context.ts
+var import_fs22 = require("fs");
+var import_path29 = require("path");
+var CONTEXT_KINDS = [
+  "note",
+  "decision",
+  "finding",
+  "blocker",
+  "handoff",
+  "question",
+  "answer"
+];
+var CONFIG_FILE_NAME2 = ".omc-config.json";
+function isSharedContextEnabled() {
+  try {
+    const configPath = (0, import_path29.join)(getClaudeConfigDir(), CONFIG_FILE_NAME2);
+    if (!(0, import_fs22.existsSync)(configPath)) return true;
+    const raw = JSON.parse((0, import_fs22.readFileSync)(configPath, "utf-8"));
+    const enabled = raw?.agents?.sharedContext?.enabled;
+    if (typeof enabled === "boolean") return enabled;
+    return true;
+  } catch {
+    return true;
+  }
+}
+var SHARED_CONTEXT_DIR = "state/shared-context";
+var DEFAULT_READ_LIMIT = 50;
+var MAX_READ_LIMIT = 500;
+var MAX_MESSAGE_LENGTH = 8192;
+function validateNamespace2(namespace) {
+  if (!namespace || namespace.length > 128) {
+    throw new Error(`Invalid namespace: must be 1-128 characters (got ${namespace.length})`);
+  }
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(namespace)) {
+    throw new Error(`Invalid namespace: must be alphanumeric with hyphens/underscores/dots (got "${namespace}")`);
+  }
+  if (namespace.includes("..")) {
+    throw new Error("Invalid namespace: path traversal not allowed");
+  }
+}
+function validateAuthor(author) {
+  if (!author || author.length > 128) {
+    throw new Error(`Invalid author: must be 1-128 characters (got ${author.length})`);
+  }
+  if (/[\r\n]/.test(author)) {
+    throw new Error("Invalid author: must not contain newlines");
+  }
+}
+function validateMessage(message) {
+  if (!message || message.length === 0) {
+    throw new Error("Invalid message: must not be empty");
+  }
+  if (message.length > MAX_MESSAGE_LENGTH) {
+    throw new Error(`Invalid message: must be <= ${MAX_MESSAGE_LENGTH} characters (got ${message.length})`);
+  }
+}
+function getFeedPath(namespace, worktreeRoot) {
+  validateNamespace2(namespace);
+  const omcRoot = getOmcRoot(worktreeRoot);
+  return (0, import_path29.join)(omcRoot, SHARED_CONTEXT_DIR, `${namespace}.jsonl`);
+}
+function ensureContextDir(worktreeRoot) {
+  const omcRoot = getOmcRoot(worktreeRoot);
+  const dir = (0, import_path29.join)(omcRoot, SHARED_CONTEXT_DIR);
+  if (!(0, import_fs22.existsSync)(dir)) {
+    (0, import_fs22.mkdirSync)(dir, { recursive: true });
+  }
+  return dir;
+}
+var _idCounter = 0;
+function generateId() {
+  const time3 = Date.now().toString(36);
+  const counter = (_idCounter++ % 1296).toString(36).padStart(2, "0");
+  const rand = Math.random().toString(36).slice(2, 6);
+  return `c${time3}${counter}${rand}`;
+}
+function postEntry(namespace, author, kind, message, opts, worktreeRoot) {
+  validateNamespace2(namespace);
+  validateAuthor(author);
+  validateMessage(message);
+  if (!CONTEXT_KINDS.includes(kind)) {
+    throw new Error(`Invalid kind: must be one of ${CONTEXT_KINDS.join(", ")} (got "${kind}")`);
+  }
+  ensureContextDir(worktreeRoot);
+  const filePath = getFeedPath(namespace, worktreeRoot);
+  const entry = {
+    id: generateId(),
+    namespace,
+    author,
+    kind,
+    message,
+    timestamp: (/* @__PURE__ */ new Date()).toISOString()
+  };
+  if (opts?.tags && opts.tags.length > 0) {
+    entry.tags = opts.tags.map(String);
+  }
+  if (opts?.refs && opts.refs.length > 0) {
+    entry.refs = opts.refs.map(String);
+  }
+  const line = JSON.stringify(entry) + "\n";
+  const lockPath = filePath + ".lock";
+  const doAppend = () => (0, import_fs22.appendFileSync)(filePath, line, { mode: 384 });
+  try {
+    withFileLockSync(lockPath, doAppend, { timeoutMs: 500, retryDelayMs: 25 });
+  } catch {
+    doAppend();
+  }
+  return entry;
+}
+function parseFeed(filePath) {
+  if (!(0, import_fs22.existsSync)(filePath)) return [];
+  let raw;
+  try {
+    raw = (0, import_fs22.readFileSync)(filePath, "utf-8");
+  } catch {
+    return [];
+  }
+  const entries = [];
+  for (const line of raw.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (parsed && typeof parsed.message === "string" && typeof parsed.timestamp === "string") {
+        entries.push(parsed);
+      }
+    } catch {
+    }
+  }
+  return entries;
+}
+function readFeed(namespace, opts = {}, worktreeRoot) {
+  const filePath = getFeedPath(namespace, worktreeRoot);
+  let entries = parseFeed(filePath);
+  if (opts.author) {
+    entries = entries.filter((e) => e.author === opts.author);
+  }
+  if (opts.kind) {
+    entries = entries.filter((e) => e.kind === opts.kind);
+  }
+  if (opts.since) {
+    const sinceMs = new Date(opts.since).getTime();
+    if (!Number.isNaN(sinceMs)) {
+      entries = entries.filter((e) => {
+        const t = new Date(e.timestamp).getTime();
+        return Number.isNaN(t) ? false : t >= sinceMs;
+      });
+    }
+  }
+  if (opts.contains) {
+    const needle = opts.contains.toLowerCase();
+    entries = entries.filter((e) => e.message.toLowerCase().includes(needle));
+  }
+  const limit = Math.min(
+    Math.max(1, opts.limit ?? DEFAULT_READ_LIMIT),
+    MAX_READ_LIMIT
+  );
+  return entries.length > limit ? entries.slice(entries.length - limit) : entries;
+}
+function clearFeed(namespace, worktreeRoot) {
+  const filePath = getFeedPath(namespace, worktreeRoot);
+  if (!(0, import_fs22.existsSync)(filePath)) return { removed: 0 };
+  const removed = parseFeed(filePath).length;
+  try {
+    (0, import_fs22.unlinkSync)(filePath);
+  } catch {
+    return { removed: 0 };
+  }
+  try {
+    const lockPath = filePath + ".lock";
+    if ((0, import_fs22.existsSync)(lockPath)) (0, import_fs22.unlinkSync)(lockPath);
+  } catch {
+  }
+  return { removed };
+}
+function digestChannel(namespace, highlightLimit = 5, worktreeRoot) {
+  const filePath = getFeedPath(namespace, worktreeRoot);
+  const entries = parseFeed(filePath);
+  const limit = Math.min(Math.max(1, highlightLimit), 20);
+  const byKind = {
+    note: 0,
+    decision: 0,
+    finding: 0,
+    blocker: 0,
+    handoff: 0,
+    question: 0,
+    answer: 0
+  };
+  const authorCounts = /* @__PURE__ */ new Map();
+  const answeredIds = /* @__PURE__ */ new Set();
+  const referencedIds = /* @__PURE__ */ new Set();
+  for (const e of entries) {
+    if (e.kind in byKind) byKind[e.kind]++;
+    authorCounts.set(e.author, (authorCounts.get(e.author) ?? 0) + 1);
+    if (e.refs && e.refs.length > 0) {
+      for (const r of e.refs) {
+        referencedIds.add(r);
+        if (e.kind === "answer") answeredIds.add(r);
+      }
+    }
+  }
+  const openQuestionEntries = entries.filter((e) => e.kind === "question" && !answeredIds.has(e.id));
+  const openBlockerEntries = entries.filter((e) => e.kind === "blocker" && !referencedIds.has(e.id));
+  const tailByKind = (k) => entries.filter((e) => e.kind === k).slice(-limit).reverse();
+  return {
+    namespace,
+    total: entries.length,
+    byKind,
+    byAuthor: [...authorCounts.entries()].map(([author, count]) => ({ author, count })).sort((a, b) => b.count - a.count || a.author.localeCompare(b.author)),
+    openQuestions: openQuestionEntries.length,
+    openBlockers: openBlockerEntries.length,
+    firstAt: entries[0]?.timestamp,
+    lastAt: entries[entries.length - 1]?.timestamp,
+    highlights: {
+      decisions: tailByKind("decision"),
+      blockers: openBlockerEntries.slice(-limit).reverse(),
+      handoffs: tailByKind("handoff"),
+      openQuestions: openQuestionEntries.slice(-limit).reverse()
+    }
+  };
+}
+function listOpenQuestions(namespace, worktreeRoot) {
+  const entries = parseFeed(getFeedPath(namespace, worktreeRoot));
+  const answered = /* @__PURE__ */ new Set();
+  for (const e of entries) {
+    if (e.kind === "answer" && e.refs) {
+      for (const r of e.refs) answered.add(r);
+    }
+  }
+  return entries.filter((e) => e.kind === "question" && !answered.has(e.id));
+}
+function listContextNamespaces(worktreeRoot) {
+  const omcRoot = getOmcRoot(worktreeRoot);
+  const dir = (0, import_path29.join)(omcRoot, SHARED_CONTEXT_DIR);
+  if (!(0, import_fs22.existsSync)(dir)) return [];
+  let files;
+  try {
+    files = (0, import_fs22.readdirSync)(dir).filter((f) => f.endsWith(".jsonl"));
+  } catch {
+    return [];
+  }
+  const summaries = [];
+  for (const file of files) {
+    const namespace = file.slice(0, -".jsonl".length);
+    const entries = parseFeed((0, import_path29.join)(dir, file));
+    const last = entries[entries.length - 1];
+    summaries.push({
+      namespace,
+      entries: entries.length,
+      lastAuthor: last?.author,
+      lastKind: last?.kind,
+      lastAt: last?.timestamp
+    });
+  }
+  return summaries.sort((a, b) => a.namespace.localeCompare(b.namespace));
+}
+
+// src/tools/shared-context-tools.ts
+var DISABLED_MSG2 = `Shared context is disabled. Set agents.sharedContext.enabled = true in ${getClaudeConfigDir()}/.omc-config.json to enable.`;
+function disabledResponse2() {
+  return {
+    content: [{ type: "text", text: DISABLED_MSG2 }],
+    isError: true
+  };
+}
+function errorResponse2(msg) {
+  return {
+    content: [{ type: "text", text: msg }],
+    isError: true
+  };
+}
+function formatEntry(entry) {
+  const parts = [`- \`${entry.timestamp}\` **${entry.author}** [${entry.kind}]`];
+  if (entry.tags && entry.tags.length > 0) {
+    parts.push(`(${entry.tags.map((t) => `#${t}`).join(" ")})`);
+  }
+  let line = parts.join(" ");
+  line += `
+  ${entry.message.replace(/\n/g, "\n  ")}`;
+  line += `
+  _id: ${entry.id}_`;
+  if (entry.refs && entry.refs.length > 0) {
+    line += ` _refs: ${entry.refs.join(", ")}_`;
+  }
+  return line;
+}
+var sharedContextPostTool = {
+  name: "shared_context_post",
+  description: 'Post an entry to the shared context feed \u2014 a broadcast "team blackboard" all agents read. Use for findings, decisions, blockers, handoffs, and questions so teammates stay aligned without re-deriving work.',
+  schema: {
+    namespace: external_exports.string().min(1).max(128).describe("Channel to post to (e.g., team name, pipeline run ID, session group)"),
+    author: external_exports.string().min(1).max(128).describe('Your agent name or role (e.g., "executor", "planner", "worker-2")'),
+    message: external_exports.string().min(1).max(8192).describe("The context to share with teammates"),
+    kind: external_exports.enum(CONTEXT_KINDS).default("note").describe("Entry kind: note, decision, finding, blocker, handoff, question, or answer"),
+    tags: external_exports.array(external_exports.string()).optional().describe("Optional freeform tags for filtering/grouping"),
+    refs: external_exports.array(external_exports.string()).optional().describe("Optional ids of related entries (lightweight threading, e.g. answering a question)"),
+    workingDirectory: external_exports.string().optional().describe("Working directory (defaults to cwd)")
+  },
+  handler: async (args) => {
+    if (!isSharedContextEnabled()) return disabledResponse2();
+    try {
+      const root = validateWorkingDirectory(args.workingDirectory);
+      const entry = postEntry(
+        args.namespace,
+        args.author,
+        args.kind,
+        args.message,
+        { tags: args.tags, refs: args.refs },
+        root
+      );
+      const text = [
+        `Posted to shared context feed **${entry.namespace}**.`,
+        "",
+        `- **id:** ${entry.id}`,
+        `- **author:** ${entry.author}`,
+        `- **kind:** ${entry.kind}`,
+        `- **at:** ${entry.timestamp}`
+      ].join("\n");
+      return { content: [{ type: "text", text }] };
+    } catch (error2) {
+      return errorResponse2(`Error posting to shared context: ${error2 instanceof Error ? error2.message : String(error2)}`);
+    }
+  }
+};
+var sharedContextReadTool = {
+  name: "shared_context_read",
+  description: "Read the shared context window for a channel \u2014 the most recent entries posted by teammates, in chronological order. Filter by kind, author, recency (since), or substring to focus the window.",
+  schema: {
+    namespace: external_exports.string().min(1).max(128).describe("Channel to read from"),
+    limit: external_exports.number().int().min(1).max(MAX_READ_LIMIT).optional().describe(`Max entries to return, newest tail (default ${DEFAULT_READ_LIMIT}, max ${MAX_READ_LIMIT})`),
+    kind: external_exports.enum(CONTEXT_KINDS).optional().describe("Only entries of this kind"),
+    author: external_exports.string().min(1).max(128).optional().describe("Only entries from this author"),
+    since: external_exports.string().optional().describe("Only entries at or after this ISO timestamp (e.g., 2026-06-09T00:00:00.000Z)"),
+    contains: external_exports.string().min(1).max(256).optional().describe("Only entries whose message contains this substring (case-insensitive)"),
+    workingDirectory: external_exports.string().optional().describe("Working directory (defaults to cwd)")
+  },
+  handler: async (args) => {
+    if (!isSharedContextEnabled()) return disabledResponse2();
+    try {
+      const root = validateWorkingDirectory(args.workingDirectory);
+      const entries = readFeed(
+        args.namespace,
+        {
+          limit: args.limit,
+          kind: args.kind,
+          author: args.author,
+          since: args.since,
+          contains: args.contains
+        },
+        root
+      );
+      if (entries.length === 0) {
+        return {
+          content: [{
+            type: "text",
+            text: `No entries in shared context channel "${args.namespace}" (or none match the filters).`
+          }]
+        };
+      }
+      const body = entries.map(formatEntry).join("\n");
+      return {
+        content: [{
+          type: "text",
+          text: `## Shared Context: ${args.namespace}
+
+Showing ${entries.length} most recent ${entries.length === 1 ? "entry" : "entries"} (oldest first):
+
+${body}`
+        }]
+      };
+    } catch (error2) {
+      return errorResponse2(`Error reading shared context: ${error2 instanceof Error ? error2.message : String(error2)}`);
+    }
+  }
+};
+var sharedContextListTool = {
+  name: "shared_context_list",
+  description: "List shared context channels (namespaces) with entry counts and the latest activity in each.",
+  schema: {
+    workingDirectory: external_exports.string().optional().describe("Working directory (defaults to cwd)")
+  },
+  handler: async (args) => {
+    if (!isSharedContextEnabled()) return disabledResponse2();
+    try {
+      const root = validateWorkingDirectory(args.workingDirectory);
+      const channels = listContextNamespaces(root);
+      if (channels.length === 0) {
+        return {
+          content: [{ type: "text", text: "No shared context channels found." }]
+        };
+      }
+      const lines = channels.map((c) => {
+        let line = `- **${c.namespace}** \u2014 ${c.entries} ${c.entries === 1 ? "entry" : "entries"}`;
+        if (c.lastAt) {
+          line += ` (last: ${c.lastKind} by ${c.lastAuthor} at ${c.lastAt})`;
+        }
+        return line;
+      });
+      return {
+        content: [{
+          type: "text",
+          text: `## Shared Context Channels
+
+${lines.join("\n")}`
+        }]
+      };
+    } catch (error2) {
+      return errorResponse2(`Error listing shared context: ${error2 instanceof Error ? error2.message : String(error2)}`);
+    }
+  }
+};
+var sharedContextClearTool = {
+  name: "shared_context_clear",
+  description: "Clear (delete) all entries in a shared context channel. Use when a team/pipeline run is finished to keep the feed tidy.",
+  schema: {
+    namespace: external_exports.string().min(1).max(128).describe("Channel to clear"),
+    workingDirectory: external_exports.string().optional().describe("Working directory (defaults to cwd)")
+  },
+  handler: async (args) => {
+    if (!isSharedContextEnabled()) return disabledResponse2();
+    try {
+      const root = validateWorkingDirectory(args.workingDirectory);
+      const result = clearFeed(args.namespace, root);
+      if (result.removed === 0) {
+        return {
+          content: [{
+            type: "text",
+            text: `Channel "${args.namespace}" was already empty (nothing to clear).`
+          }]
+        };
+      }
+      return {
+        content: [{
+          type: "text",
+          text: `Cleared shared context channel "${args.namespace}" (${result.removed} ${result.removed === 1 ? "entry" : "entries"} removed).`
+        }]
+      };
+    } catch (error2) {
+      return errorResponse2(`Error clearing shared context: ${error2 instanceof Error ? error2.message : String(error2)}`);
+    }
+  }
+};
+var sharedContextDigestTool = {
+  name: "shared_context_digest",
+  description: "Compress a shared context channel into a triage summary: totals by kind, top authors, open questions, open blockers, plus a few highlight entries per category. Use this before doing deep reads \u2014 it lets you orient on a busy channel in O(1) tokens.",
+  schema: {
+    namespace: external_exports.string().min(1).max(128).describe("Channel to summarize"),
+    highlightLimit: external_exports.number().int().min(1).max(20).optional().describe("Entries per highlight section (default 5)"),
+    workingDirectory: external_exports.string().optional().describe("Working directory (defaults to cwd)")
+  },
+  handler: async (args) => {
+    if (!isSharedContextEnabled()) return disabledResponse2();
+    try {
+      const root = validateWorkingDirectory(args.workingDirectory);
+      const digest = digestChannel(args.namespace, args.highlightLimit, root);
+      if (digest.total === 0) {
+        return {
+          content: [{
+            type: "text",
+            text: `Channel "${args.namespace}" is empty \u2014 nothing to digest.`
+          }]
+        };
+      }
+      const kindLines = Object.entries(digest.byKind).filter(([, n]) => n > 0).map(([k, n]) => `  - ${k}: ${n}`).join("\n");
+      const authorLines = digest.byAuthor.slice(0, 8).map((a) => `  - ${a.author}: ${a.count}`).join("\n");
+      const section = (title, list) => {
+        if (list.length === 0) return `### ${title}
+
+_none_`;
+        return `### ${title}
+
+${list.map(formatEntry).join("\n")}`;
+      };
+      const text = [
+        `## Shared Context Digest: ${digest.namespace}`,
+        "",
+        `- **total entries:** ${digest.total}`,
+        `- **open questions:** ${digest.openQuestions}`,
+        `- **open blockers:** ${digest.openBlockers}`,
+        digest.firstAt ? `- **first at:** ${digest.firstAt}` : "",
+        digest.lastAt ? `- **last at:** ${digest.lastAt}` : "",
+        "",
+        "### By kind",
+        kindLines || "  _none_",
+        "",
+        "### Top authors",
+        authorLines || "  _none_",
+        "",
+        section("Latest decisions", digest.highlights.decisions),
+        "",
+        section("Open blockers", digest.highlights.blockers),
+        "",
+        section("Latest handoffs", digest.highlights.handoffs),
+        "",
+        section("Open questions", digest.highlights.openQuestions)
+      ].filter(Boolean).join("\n");
+      return { content: [{ type: "text", text }] };
+    } catch (error2) {
+      return errorResponse2(`Error digesting shared context: ${error2 instanceof Error ? error2.message : String(error2)}`);
+    }
+  }
+};
+var sharedContextOpenQuestionsTool = {
+  name: "shared_context_open_questions",
+  description: "List unanswered questions in a shared context channel \u2014 questions whose id is not referenced by any later answer entry. Use to find what teammates need from you before continuing.",
+  schema: {
+    namespace: external_exports.string().min(1).max(128).describe("Channel to scan"),
+    workingDirectory: external_exports.string().optional().describe("Working directory (defaults to cwd)")
+  },
+  handler: async (args) => {
+    if (!isSharedContextEnabled()) return disabledResponse2();
+    try {
+      const root = validateWorkingDirectory(args.workingDirectory);
+      const open3 = listOpenQuestions(args.namespace, root);
+      if (open3.length === 0) {
+        return {
+          content: [{
+            type: "text",
+            text: `No open questions in channel "${args.namespace}".`
+          }]
+        };
+      }
+      const body = open3.map(formatEntry).join("\n");
+      return {
+        content: [{
+          type: "text",
+          text: `## Open Questions: ${args.namespace}
+
+${open3.length} unanswered (answer via shared_context_post with kind="answer" and refs=["<id>"]):
+
+${body}`
+        }]
+      };
+    } catch (error2) {
+      return errorResponse2(`Error listing open questions: ${error2 instanceof Error ? error2.message : String(error2)}`);
+    }
+  }
+};
+var sharedContextTools = [
+  sharedContextPostTool,
+  sharedContextReadTool,
+  sharedContextListTool,
+  sharedContextClearTool,
+  sharedContextDigestTool,
+  sharedContextOpenQuestionsTool
+];
+
 // src/tools/deepinit-manifest.ts
 var import_node_fs = require("node:fs");
 var import_node_path = require("node:path");
@@ -27037,6 +27584,7 @@ var TOOL_CATEGORIES = {
   CODEX: "codex",
   GEMINI: "gemini",
   SHARED_MEMORY: "shared-memory",
+  SHARED_CONTEXT: "shared-context",
   DEEPINIT: "deepinit",
   WIKI: "wiki"
 };
@@ -27339,25 +27887,25 @@ var DEFAULT_WIKI_CONFIG = {
 };
 
 // src/hooks/wiki/storage.ts
-var import_fs22 = require("fs");
-var import_path29 = require("path");
+var import_fs23 = require("fs");
+var import_path30 = require("path");
 var WIKI_DIR = "wiki";
 var INDEX_FILE = "index.md";
 var LOG_FILE = "log.md";
 var ENVIRONMENT_FILE = "environment.md";
 var RESERVED_FILES = /* @__PURE__ */ new Set([INDEX_FILE, LOG_FILE, ENVIRONMENT_FILE]);
 function getWikiDir(root) {
-  return (0, import_path29.join)(getOmcRoot(root), WIKI_DIR);
+  return (0, import_path30.join)(getOmcRoot(root), WIKI_DIR);
 }
 function ensureWikiDir(root) {
   const wikiDir = getWikiDir(root);
-  if (!(0, import_fs22.existsSync)(wikiDir)) {
-    (0, import_fs22.mkdirSync)(wikiDir, { recursive: true });
+  if (!(0, import_fs23.existsSync)(wikiDir)) {
+    (0, import_fs23.mkdirSync)(wikiDir, { recursive: true });
   }
   const omcRoot = getOmcRoot(root);
-  const gitignorePath = (0, import_path29.join)(omcRoot, ".gitignore");
-  if ((0, import_fs22.existsSync)(gitignorePath)) {
-    const content = (0, import_fs22.readFileSync)(gitignorePath, "utf-8");
+  const gitignorePath = (0, import_path30.join)(omcRoot, ".gitignore");
+  if ((0, import_fs23.existsSync)(gitignorePath)) {
+    const content = (0, import_fs23.readFileSync)(gitignorePath, "utf-8");
     if (!content.includes("wiki/")) {
       atomicWriteFileSync(gitignorePath, content.trimEnd() + "\nwiki/\n");
     }
@@ -27368,7 +27916,7 @@ function ensureWikiDir(root) {
 }
 function withWikiLock(root, fn) {
   const wikiDir = ensureWikiDir(root);
-  const lockPath = lockPathFor((0, import_path29.join)(wikiDir, ".wiki-lock"));
+  const lockPath = lockPathFor((0, import_path30.join)(wikiDir, ".wiki-lock"));
   return withFileLockSync(lockPath, fn, { timeoutMs: 5e3, retryDelayMs: 50 });
 }
 function parseFrontmatter(raw) {
@@ -27450,9 +27998,9 @@ function safeWikiPath(wikiDir, filename) {
   if (filename.includes("/") || filename.includes("\\") || filename.includes("..")) {
     return null;
   }
-  const filePath = (0, import_path29.join)(wikiDir, filename);
-  const resolved = (0, import_path29.resolve)(filePath);
-  if (!resolved.startsWith((0, import_path29.resolve)(wikiDir) + import_path29.sep)) {
+  const filePath = (0, import_path30.join)(wikiDir, filename);
+  const resolved = (0, import_path30.resolve)(filePath);
+  if (!resolved.startsWith((0, import_path30.resolve)(wikiDir) + import_path30.sep)) {
     return null;
   }
   return filePath;
@@ -27461,9 +28009,9 @@ function readPage(root, filename) {
   const wikiDir = getWikiDir(root);
   const filePath = safeWikiPath(wikiDir, filename);
   if (!filePath) return null;
-  if (!(0, import_fs22.existsSync)(filePath)) return null;
+  if (!(0, import_fs23.existsSync)(filePath)) return null;
   try {
-    const raw = (0, import_fs22.readFileSync)(filePath, "utf-8");
+    const raw = (0, import_fs23.readFileSync)(filePath, "utf-8");
     const parsed = parseFrontmatter(raw);
     if (!parsed) return null;
     return {
@@ -27477,16 +28025,16 @@ function readPage(root, filename) {
 }
 function listPages(root) {
   const wikiDir = getWikiDir(root);
-  if (!(0, import_fs22.existsSync)(wikiDir)) return [];
-  return (0, import_fs22.readdirSync)(wikiDir).filter((f) => f.endsWith(".md") && !RESERVED_FILES.has(f)).sort();
+  if (!(0, import_fs23.existsSync)(wikiDir)) return [];
+  return (0, import_fs23.readdirSync)(wikiDir).filter((f) => f.endsWith(".md") && !RESERVED_FILES.has(f)).sort();
 }
 function readAllPages(root) {
   return listPages(root).map((f) => readPage(root, f)).filter((p) => p !== null);
 }
 function readIndex(root) {
-  const indexPath = (0, import_path29.join)(getWikiDir(root), INDEX_FILE);
-  if (!(0, import_fs22.existsSync)(indexPath)) return null;
-  return (0, import_fs22.readFileSync)(indexPath, "utf-8");
+  const indexPath = (0, import_path30.join)(getWikiDir(root), INDEX_FILE);
+  if (!(0, import_fs23.existsSync)(indexPath)) return null;
+  return (0, import_fs23.readFileSync)(indexPath, "utf-8");
 }
 function writePageUnsafe(root, page) {
   if (RESERVED_FILES.has(page.filename)) {
@@ -27501,8 +28049,8 @@ function deletePageUnsafe(root, filename) {
   const wikiDir = getWikiDir(root);
   const filePath = safeWikiPath(wikiDir, filename);
   if (!filePath) return false;
-  if (!(0, import_fs22.existsSync)(filePath)) return false;
-  (0, import_fs22.unlinkSync)(filePath);
+  if (!(0, import_fs23.existsSync)(filePath)) return false;
+  (0, import_fs23.unlinkSync)(filePath);
   return true;
 }
 function updateIndexUnsafe(root) {
@@ -27531,19 +28079,19 @@ function updateIndexUnsafe(root) {
     lines.push("");
   }
   const wikiDir = ensureWikiDir(root);
-  atomicWriteFileSync((0, import_path29.join)(wikiDir, INDEX_FILE), lines.join("\n"));
+  atomicWriteFileSync((0, import_path30.join)(wikiDir, INDEX_FILE), lines.join("\n"));
 }
 function appendLogUnsafe(root, entry) {
   const wikiDir = ensureWikiDir(root);
-  const logPath = (0, import_path29.join)(wikiDir, LOG_FILE);
+  const logPath = (0, import_path30.join)(wikiDir, LOG_FILE);
   const logLine = `## [${entry.timestamp}] ${entry.operation}
 - **Pages:** ${entry.pagesAffected.join(", ") || "none"}
 - **Summary:** ${entry.summary}
 
 `;
   let existing = "";
-  if ((0, import_fs22.existsSync)(logPath)) {
-    existing = (0, import_fs22.readFileSync)(logPath, "utf-8");
+  if ((0, import_fs23.existsSync)(logPath)) {
+    existing = (0, import_fs23.readFileSync)(logPath, "utf-8");
   } else {
     existing = "# Wiki Log\n\n";
   }
@@ -28214,37 +28762,37 @@ var wikiTools = [
 ];
 
 // src/tools/skills-tools.ts
-var import_path33 = require("path");
+var import_path34 = require("path");
 var import_os6 = require("os");
 
 // src/hooks/learner/loader.ts
-var import_fs24 = require("fs");
+var import_fs25 = require("fs");
 var import_crypto3 = require("crypto");
-var import_path32 = require("path");
+var import_path33 = require("path");
 
 // src/hooks/learner/finder.ts
-var import_fs23 = require("fs");
-var import_path31 = require("path");
+var import_fs24 = require("fs");
+var import_path32 = require("path");
 
 // src/hooks/learner/constants.ts
-var import_path30 = require("path");
+var import_path31 = require("path");
 var import_os5 = require("os");
-var USER_SKILLS_DIR = (0, import_path30.join)(getClaudeConfigDir(), "skills", "omc-learned");
-var GLOBAL_SKILLS_DIR = (0, import_path30.join)((0, import_os5.homedir)(), ".omc", "skills");
+var USER_SKILLS_DIR = (0, import_path31.join)(getClaudeConfigDir(), "skills", "omc-learned");
+var GLOBAL_SKILLS_DIR = (0, import_path31.join)((0, import_os5.homedir)(), ".omc", "skills");
 var PROJECT_SKILLS_SUBDIR = OmcPaths.SKILLS;
-var PROJECT_AGENT_SKILLS_SUBDIR = (0, import_path30.join)(".agents", "skills");
+var PROJECT_AGENT_SKILLS_SUBDIR = (0, import_path31.join)(".agents", "skills");
 var MAX_RECURSION_DEPTH = 10;
 var SKILL_EXTENSION = ".md";
 var DEBUG_ENABLED = process.env.OMC_DEBUG === "1";
 
 // src/hooks/learner/finder.ts
 function findSkillFilesRecursive(dir, results, depth = 0) {
-  if (!(0, import_fs23.existsSync)(dir)) return;
+  if (!(0, import_fs24.existsSync)(dir)) return;
   if (depth > MAX_RECURSION_DEPTH) return;
   try {
-    const entries = (0, import_fs23.readdirSync)(dir, { withFileTypes: true });
+    const entries = (0, import_fs24.readdirSync)(dir, { withFileTypes: true });
     for (const entry of entries) {
-      const fullPath = (0, import_path31.join)(dir, entry.name);
+      const fullPath = (0, import_path32.join)(dir, entry.name);
       if (entry.isDirectory()) {
         findSkillFilesRecursive(fullPath, results, depth + 1);
       } else if (entry.isFile() && entry.name.endsWith(SKILL_EXTENSION)) {
@@ -28259,15 +28807,15 @@ function findSkillFilesRecursive(dir, results, depth = 0) {
 }
 function safeRealpathSync(filePath) {
   try {
-    return (0, import_fs23.realpathSync)(filePath);
+    return (0, import_fs24.realpathSync)(filePath);
   } catch {
     return filePath;
   }
 }
 function isWithinBoundary(realPath, boundary) {
-  const normalizedReal = (0, import_path31.normalize)(realPath);
-  const normalizedBoundary = (0, import_path31.normalize)(safeRealpathSync(boundary));
-  return normalizedReal === normalizedBoundary || normalizedReal.startsWith(normalizedBoundary + import_path31.sep);
+  const normalizedReal = (0, import_path32.normalize)(realPath);
+  const normalizedBoundary = (0, import_path32.normalize)(safeRealpathSync(boundary));
+  return normalizedReal === normalizedBoundary || normalizedReal.startsWith(normalizedBoundary + import_path32.sep);
 }
 function findSkillFiles(projectRoot, options) {
   const candidates = [];
@@ -28275,8 +28823,8 @@ function findSkillFiles(projectRoot, options) {
   const scope = options?.scope ?? "all";
   if (projectRoot && (scope === "project" || scope === "all")) {
     const projectSkillDirs = [
-      (0, import_path31.join)(projectRoot, PROJECT_SKILLS_SUBDIR),
-      (0, import_path31.join)(projectRoot, PROJECT_AGENT_SKILLS_SUBDIR)
+      (0, import_path32.join)(projectRoot, PROJECT_SKILLS_SUBDIR),
+      (0, import_path32.join)(projectRoot, PROJECT_AGENT_SKILLS_SUBDIR)
     ];
     for (const projectSkillsDir of projectSkillDirs) {
       const projectFiles = [];
@@ -28485,7 +29033,7 @@ function loadAllSkills(projectRoot) {
   const seenIds = /* @__PURE__ */ new Map();
   for (const candidate of candidates) {
     try {
-      const rawContent = (0, import_fs24.readFileSync)(candidate.path, "utf-8");
+      const rawContent = (0, import_fs25.readFileSync)(candidate.path, "utf-8");
       const { metadata, content, valid, errors } = parseSkillFile(rawContent);
       if (!valid) {
         if (DEBUG_ENABLED) {
@@ -28494,7 +29042,7 @@ function loadAllSkills(projectRoot) {
         continue;
       }
       const skillId = metadata.id;
-      const relativePath = (0, import_path32.normalize)((0, import_path32.relative)(candidate.sourceDir, candidate.path));
+      const relativePath = (0, import_path33.normalize)((0, import_path33.relative)(candidate.sourceDir, candidate.path));
       const skill = {
         path: candidate.path,
         relativePath,
@@ -28520,13 +29068,13 @@ function loadAllSkills(projectRoot) {
 // src/tools/skills-tools.ts
 var ALLOWED_BOUNDARIES = [process.cwd(), (0, import_os6.homedir)()];
 function validateProjectRoot(input) {
-  const normalized = (0, import_path33.normalize)((0, import_path33.resolve)(input));
+  const normalized = (0, import_path34.normalize)((0, import_path34.resolve)(input));
   if (input.includes("..")) {
     throw new Error("Invalid project root: path traversal not allowed");
   }
   const isWithinAllowed = ALLOWED_BOUNDARIES.some((boundary) => {
-    const normalizedBoundary = (0, import_path33.normalize)(boundary);
-    return normalized === normalizedBoundary || normalized.startsWith(normalizedBoundary + import_path33.sep);
+    const normalizedBoundary = (0, import_path34.normalize)(boundary);
+    return normalized === normalizedBoundary || normalized.startsWith(normalizedBoundary + import_path34.sep);
   });
   if (!isWithinAllowed) {
     throw new Error("Invalid project root: path is outside allowed directories");
@@ -28647,6 +29195,7 @@ var allTools = [
   ...memoryTools,
   ...traceTools,
   ...sharedMemoryTools,
+  ...sharedContextTools,
   deepinitManifestTool,
   ...wikiTools,
   ...skillsTools

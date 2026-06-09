@@ -30,6 +30,7 @@ export const TOOL_CATEGORIES = {
   CODEX: 'codex',
   GEMINI: 'gemini',
   SHARED_MEMORY: 'shared-memory',
+  SHARED_CONTEXT: 'shared-context',
   DEEPINIT: 'deepinit',
   WIKI: 'wiki',
 } as const;

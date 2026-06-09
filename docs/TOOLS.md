@@ -15,6 +15,7 @@ Unlike skills that users invoke directly, tools are used internally by agents du
 - [Session Search](#session-search) — Search previous session history
 - [Trace](#trace) — Agent flow trace analysis
 - [Shared Memory](#shared-memory) — Cross-agent shared memory for team coordination
+- [Shared Context Feed](#shared-context-feed) — Append-only "team blackboard" all agents read as shared context
 - [Skills](#skills) — Internal skill management tools
 - [Deepinit Manifest](#deepinit-manifest) — Incremental AGENTS.md regeneration manifest
 
@@ -715,6 +716,95 @@ Removes all entries from shared memory.
 ```
 shared_memory_cleanup()
 ```
+
+---
+
+## Shared Context Feed
+
+Append-only, authored, chronological "team blackboard" channel. Where shared memory provides point lookups (key → value, overwrite-in-place), the shared context feed is a broadcast log every teammate reads as a shared rolling context window.
+
+Use it to keep agents aligned without re-deriving work:
+
+- **post** findings/decisions/blockers/handoffs/questions/answers as you make them
+- **read** the recent tail (optionally filtered by kind/author/since/substring) before starting a task to see what teammates already know
+
+Storage: `.omc/state/shared-context/{namespace}.jsonl` — one JSON entry per line, time-ordered.
+
+Config gate: `agents.sharedContext.enabled` in `~/.claude/.omc-config.json` (defaults to enabled).
+
+### Tools
+
+#### `shared_context_post`
+
+Posts an entry to the channel.
+
+```
+shared_context_post(
+  namespace="team-alpha",
+  author="planner",
+  kind="decision",
+  message="Use JWT with refresh tokens",
+  tags=["auth", "security"]
+)
+```
+
+`kind` is one of: `note` (default), `decision`, `finding`, `blocker`, `handoff`, `question`, `answer`.
+
+Pass `refs=["<entry-id>"]` to thread a reply to an earlier entry (e.g., answering a question).
+
+#### `shared_context_read`
+
+Reads the most recent entries from a channel, in chronological order. Supports filters:
+
+```
+shared_context_read(namespace="team-alpha")
+shared_context_read(namespace="team-alpha", kind="blocker")
+shared_context_read(namespace="team-alpha", author="executor", limit=10)
+shared_context_read(namespace="team-alpha", since="2026-06-09T00:00:00.000Z")
+shared_context_read(namespace="team-alpha", contains="auth")
+```
+
+#### `shared_context_list`
+
+Lists all channels with entry counts and latest activity.
+
+```
+shared_context_list()
+```
+
+#### `shared_context_clear`
+
+Deletes all entries in a channel (e.g., at end of a pipeline run).
+
+```
+shared_context_clear(namespace="team-alpha")
+```
+
+#### `shared_context_digest`
+
+Compresses a channel into a triage summary — totals by kind, top authors, open-question/open-blocker counts, and a few highlight entries per category. Use this before doing deep reads on a busy channel.
+
+```
+shared_context_digest(namespace="team-alpha")
+shared_context_digest(namespace="team-alpha", highlightLimit=10)
+```
+
+#### `shared_context_open_questions`
+
+Lists unanswered questions — questions whose id is not referenced by any later `kind=answer` entry. Use to find what teammates need from you before continuing.
+
+```
+shared_context_open_questions(namespace="team-alpha")
+```
+
+### When to use which primitive
+
+| Need                                                 | Use                       |
+| ---------------------------------------------------- | ------------------------- |
+| Point lookup of a single value (latest-write-wins)   | `shared_memory_*`         |
+| Broadcast/append a discovery for everyone to see     | `shared_context_post`     |
+| Catch up on what teammates have learned recently     | `shared_context_read`     |
+| Direct delivery to one named teammate                | Team `SendMessage` router |
 
 ---
 

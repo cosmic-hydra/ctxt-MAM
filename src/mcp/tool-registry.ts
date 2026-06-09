@@ -24,6 +24,7 @@ import { notepadTools } from '../tools/notepad-tools.js';
 import { memoryTools } from '../tools/memory-tools.js';
 import { traceTools } from '../tools/trace-tools.js';
 import { sharedMemoryTools } from '../tools/shared-memory-tools.js';
+import { sharedContextTools } from '../tools/shared-context-tools.js';
 import { deepinitManifestTool } from '../tools/deepinit-manifest.js';
 import { wikiTools } from '../tools/wiki-tools.js';
 import { skillsTools } from '../tools/skills-tools.js';
@@ -55,6 +56,7 @@ export const allTools: ToolDef[] = [
   ...(memoryTools as unknown as ToolDef[]),
   ...(traceTools as unknown as ToolDef[]),
   ...(sharedMemoryTools as unknown as ToolDef[]),
+  ...(sharedContextTools as unknown as ToolDef[]),
   deepinitManifestTool as unknown as ToolDef,
   ...(wikiTools as unknown as ToolDef[]),
   ...(skillsTools as unknown as ToolDef[]),

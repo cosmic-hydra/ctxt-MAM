@@ -15,6 +15,7 @@ import { notepadTools } from "../tools/notepad-tools.js";
 import { memoryTools } from "../tools/memory-tools.js";
 import { traceTools } from "../tools/trace-tools.js";
 import { sharedMemoryTools } from "../tools/shared-memory-tools.js";
+import { sharedContextTools } from "../tools/shared-context-tools.js";
 import { getInteropTools } from "../interop/mcp-bridge.js";
 import { deepinitManifestTool } from "../tools/deepinit-manifest.js";
 import { wikiTools } from "../tools/wiki-tools.js";
@@ -53,6 +54,8 @@ export const DISABLE_TOOLS_GROUP_MAP: Record<string, ToolCategory> = {
   'codex': TOOL_CATEGORIES.CODEX,
   'gemini': TOOL_CATEGORIES.GEMINI,
   'shared-memory': TOOL_CATEGORIES.SHARED_MEMORY,
+  'shared-context': TOOL_CATEGORIES.SHARED_CONTEXT,
+  'context-feed': TOOL_CATEGORIES.SHARED_CONTEXT,
   'deepinit': TOOL_CATEGORIES.DEEPINIT,
   'deepinit-manifest': TOOL_CATEGORIES.DEEPINIT,
   'wiki': TOOL_CATEGORIES.WIKI,
@@ -103,6 +106,7 @@ const allTools: ToolDef[] = [
   ...tagCategory(memoryTools as unknown as ToolDef[], TOOL_CATEGORIES.MEMORY),
   ...tagCategory(traceTools as unknown as ToolDef[], TOOL_CATEGORIES.TRACE),
   ...tagCategory(sharedMemoryTools as unknown as ToolDef[], TOOL_CATEGORIES.SHARED_MEMORY),
+  ...tagCategory(sharedContextTools as unknown as ToolDef[], TOOL_CATEGORIES.SHARED_CONTEXT),
   { ...(deepinitManifestTool as unknown as ToolDef), category: TOOL_CATEGORIES.DEEPINIT },
   ...tagCategory(wikiTools as unknown as ToolDef[], TOOL_CATEGORIES.WIKI),
   ...interopTools,
@@ -160,6 +164,7 @@ interface ToolNameFilterOptions {
   includeTrace?: boolean;
   includeInterop?: boolean;
   includeSharedMemory?: boolean;
+  includeSharedContext?: boolean;
   includeDeepinit?: boolean;
   includeWiki?: boolean;
 }
@@ -176,6 +181,7 @@ function getExcludedCategories(options?: ToolNameFilterOptions): Set<ToolCategor
     includeTrace = true,
     includeInterop = true,
     includeSharedMemory = true,
+    includeSharedContext = true,
     includeDeepinit = true,
     includeWiki = true,
   } = options || {};
@@ -191,6 +197,7 @@ function getExcludedCategories(options?: ToolNameFilterOptions): Set<ToolCategor
   if (!includeTrace) excludedCategories.add(TOOL_CATEGORIES.TRACE);
   if (!includeInterop) excludedCategories.add(TOOL_CATEGORIES.INTEROP);
   if (!includeSharedMemory) excludedCategories.add(TOOL_CATEGORIES.SHARED_MEMORY);
+  if (!includeSharedContext) excludedCategories.add(TOOL_CATEGORIES.SHARED_CONTEXT);
   if (!includeDeepinit) excludedCategories.add(TOOL_CATEGORIES.DEEPINIT);
   if (!includeWiki) excludedCategories.add(TOOL_CATEGORIES.WIKI);
   return excludedCategories;

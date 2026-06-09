@@ -7,6 +7,7 @@ import { notepadTools } from '../tools/notepad-tools.js';
 import { memoryTools } from '../tools/memory-tools.js';
 import { traceTools } from '../tools/trace-tools.js';
 import { sharedMemoryTools } from '../tools/shared-memory-tools.js';
+import { sharedContextTools } from '../tools/shared-context-tools.js';
 import { deepinitManifestTool } from '../tools/deepinit-manifest.js';
 import { wikiTools } from '../tools/wiki-tools.js';
 import { skillsTools } from '../tools/skills-tools.js';
@@ -24,6 +25,7 @@ describe('standalone-server tool composition', () => {
     ...memoryTools,
     ...traceTools,
     ...sharedMemoryTools,
+    ...sharedContextTools,
     deepinitManifestTool,
     ...wikiTools,
     ...skillsTools,
@@ -31,9 +33,9 @@ describe('standalone-server tool composition', () => {
 
   it('should have at least the expected total tool count', () => {
     // 12 LSP + 2 AST + 1 python + 5 state + 6 notepad + 4 memory + 3 trace
-    // + 5 shared_memory + 1 deepinit + 7 wiki + 3 skills = 49 baseline.
+    // + 5 shared_memory + 6 shared_context + 1 deepinit + 7 wiki + 3 skills = 55 baseline.
     // Use ≥ so this guard doesn't break when new tools are legitimately added.
-    expect(expectedTools.length).toBeGreaterThanOrEqual(49);
+    expect(expectedTools.length).toBeGreaterThanOrEqual(55);
   });
 
   it('should include 3 trace tools', () => {
@@ -81,6 +83,40 @@ describe('standalone-server tool composition', () => {
   it('should include shared_memory_read tool', () => {
     const names = sharedMemoryTools.map(t => t.name);
     expect(names).toContain('shared_memory_read');
+  });
+
+  it('should include 6 shared_context tools', () => {
+    expect(sharedContextTools).toHaveLength(6);
+  });
+
+  it('should include shared_context_post tool', () => {
+    const names = sharedContextTools.map(t => t.name);
+    expect(names).toContain('shared_context_post');
+  });
+
+  it('should include shared_context_read tool', () => {
+    const names = sharedContextTools.map(t => t.name);
+    expect(names).toContain('shared_context_read');
+  });
+
+  it('should include shared_context_list tool', () => {
+    const names = sharedContextTools.map(t => t.name);
+    expect(names).toContain('shared_context_list');
+  });
+
+  it('should include shared_context_clear tool', () => {
+    const names = sharedContextTools.map(t => t.name);
+    expect(names).toContain('shared_context_clear');
+  });
+
+  it('should include shared_context_digest tool', () => {
+    const names = sharedContextTools.map(t => t.name);
+    expect(names).toContain('shared_context_digest');
+  });
+
+  it('should include shared_context_open_questions tool', () => {
+    const names = sharedContextTools.map(t => t.name);
+    expect(names).toContain('shared_context_open_questions');
   });
 
   it('should include 3 skills tools', () => {
