@@ -48,6 +48,8 @@ interface ToolNameFilterOptions {
     includeInterop?: boolean;
     includeSharedMemory?: boolean;
     includeSharedContext?: boolean;
+    includeTaskBrief?: boolean;
+    includeAgentPresence?: boolean;
     includeDeepinit?: boolean;
     includeWiki?: boolean;
 }

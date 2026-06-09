@@ -14,7 +14,8 @@
   "bin": {
     "oh-my-claudecode": "bin/oh-my-claudecode.js",
     "omc": "bin/oh-my-claudecode.js",
-    "omc-cli": "bridge/cli.cjs"
+    "omc-cli": "bridge/cli.cjs",
+    "omc-mam": "bin/omc-mam.js"
   },
   "files": [
     "dist",
@@ -26,6 +27,7 @@
     "bridge/team-mcp.cjs",
     "bridge/team.js",
     "bridge/cli.cjs",
+    "bridge/mam-cli.cjs",
     "bridge/runtime-cli.cjs",
     "commands",
     "hooks",

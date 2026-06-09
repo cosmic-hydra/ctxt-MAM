@@ -30,8 +30,11 @@
  * - `handoff`  — work is being passed to another agent/role
  * - `question` — a request for input from teammates
  * - `answer`   — a response to an earlier question (often via `refs`)
+ * - `plan`     — a proposed approach, posted for teammates to critique
+ *               before execution (lets agents share *how they think*
+ *               without committing to the approach yet)
  */
-export declare const CONTEXT_KINDS: readonly ["note", "decision", "finding", "blocker", "handoff", "question", "answer"];
+export declare const CONTEXT_KINDS: readonly ["note", "decision", "finding", "blocker", "handoff", "question", "answer", "plan"];
 export type ContextKind = (typeof CONTEXT_KINDS)[number];
 export interface ContextEntry {
     /** Short, sortable, unique id. Referenceable from another entry's `refs`. */

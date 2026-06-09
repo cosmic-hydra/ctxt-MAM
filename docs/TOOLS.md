@@ -16,6 +16,9 @@ Unlike skills that users invoke directly, tools are used internally by agents du
 - [Trace](#trace) — Agent flow trace analysis
 - [Shared Memory](#shared-memory) — Cross-agent shared memory for team coordination
 - [Shared Context Feed](#shared-context-feed) — Append-only "team blackboard" all agents read as shared context
+- [Task Briefs](#task-briefs) — Structured task descriptors so any agent can grasp a task deterministically
+- [Agent Presence](#agent-presence) — "Who's working what right now" beacons with TTL
+- [omc-mam CLI](#omc-mam-cli-provider-agnostic) — Shell entry point for non-Claude agents (Codex, Gemini, etc.)
 - [Skills](#skills) — Internal skill management tools
 - [Deepinit Manifest](#deepinit-manifest) — Incremental AGENTS.md regeneration manifest
 
@@ -804,7 +807,161 @@ shared_context_open_questions(namespace="team-alpha")
 | Point lookup of a single value (latest-write-wins)   | `shared_memory_*`         |
 | Broadcast/append a discovery for everyone to see     | `shared_context_post`     |
 | Catch up on what teammates have learned recently     | `shared_context_read`     |
+| Compress a busy channel to triage view               | `shared_context_digest`   |
+| Capture a task spec everyone can read at start       | `task_brief_create`       |
+| Discover who's currently working what                | `agent_presence_list`     |
 | Direct delivery to one named teammate                | Team `SendMessage` router |
+
+---
+
+## Task Briefs
+
+A **task brief** is a structured task descriptor — the artifact any agent (Claude, Codex, Gemini, or any other provider) reads at the start of work to deterministically grasp what to do: goal, success criteria, constraints, owners, status, and pointers to related context.
+
+Where the shared context feed is the flowing chronological log of what's happening, a task brief is the stable "spec card" for a unit of work. Together they form a productivity loop:
+
+> brief → agents post plans/findings/blockers tagged with the brief id → status updates close the loop on the brief itself.
+
+Storage: `.omc/state/task-briefs/{namespace}/{briefId}.json`
+Config gate: `agents.taskBrief.enabled` (default on).
+
+### Tools
+
+#### `task_brief_create`
+
+Captures goal + success criteria + constraints + owners.
+
+```
+task_brief_create(
+  briefId="fix-flaky-auth",
+  namespace="team-alpha",
+  title="Fix flaky auth tests",
+  goal="Get the suite green on main without quarantines",
+  createdBy="planner",
+  successCriteria=["no quarantined tests", "all auth/* tests pass"],
+  constraints=["must run under 60s"],
+  owners=["executor-1", "verifier"]
+)
+```
+
+#### `task_brief_get`
+
+Reads the brief — agents call this at task start.
+
+```
+task_brief_get(briefId="fix-flaky-auth", namespace="team-alpha")
+```
+
+#### `task_brief_update_status`
+
+Appends a status transition. History is append-only.
+
+```
+task_brief_update_status(
+  briefId="fix-flaky-auth", namespace="team-alpha",
+  status="in-progress", by="executor-1", summary="started work"
+)
+```
+
+Statuses: `open`, `in-progress`, `blocked`, `done`, `cancelled`.
+
+#### `task_brief_amend`
+
+Additively amend lists (concurrent-safe — never overwrites whole lists).
+
+```
+task_brief_amend(
+  briefId="fix-flaky-auth", namespace="team-alpha", by="planner",
+  addOwners=["reviewer-1"], addRelatedKeys=["team-alpha:auth-spec"]
+)
+```
+
+#### `task_brief_list` / `task_brief_delete`
+
+```
+task_brief_list(namespace="team-alpha", status="in-progress")
+task_brief_delete(briefId="...", namespace="...")  # prefer status="done"
+```
+
+---
+
+## Agent Presence
+
+A lightweight, TTL-bounded "who's working what right now" beacon. Provider-agnostic — agent records its name, provider, role, focus, and optional brief id. Teammates list presence to discover live collaborators before deciding what to pick up.
+
+Storage: `.omc/state/agent-presence/{namespace}/{agent}.json`
+Config gate: `agents.presence.enabled` (default on).
+
+### Tools
+
+#### `agent_presence_announce`
+
+Announces / heartbeats presence. Re-call to refresh the TTL.
+
+```
+agent_presence_announce(
+  namespace="team-alpha",
+  agent="codex-1",
+  provider="codex",          # claude, codex, gemini, ollama:llama3, etc.
+  role="executor",
+  focus="fixing flaky auth tests",
+  briefId="fix-flaky-auth",
+  ttlSeconds=600
+)
+```
+
+#### `agent_presence_list`
+
+Lists live entries; stale ones auto-evict on read.
+
+```
+agent_presence_list(namespace="team-alpha")
+```
+
+#### `agent_presence_leave` / `agent_presence_reap`
+
+Explicit leave (vs. waiting for TTL); manual sweep across all channels.
+
+---
+
+## `omc-mam` CLI (provider-agnostic)
+
+Every primitive above is also exposed via a standalone CLI, `omc-mam`, so agents that don't speak MCP (Codex, Gemini, Ollama-driven harnesses, shell scripts, etc.) can use the same coordination surface by shelling out.
+
+The CLI imports the same lib functions the MCP tools use — behavior, validation, and storage paths are identical regardless of caller.
+
+```sh
+# Context feed
+omc-mam context post   --namespace team-alpha --author codex-1 \
+                       --kind finding --message "flaky test in auth/"
+omc-mam context read   --namespace team-alpha --kind blocker
+omc-mam context digest --namespace team-alpha
+omc-mam context open-questions --namespace team-alpha
+
+# Task briefs
+omc-mam brief create --id fix-auth --namespace team-alpha \
+                     --title "Fix flaky auth tests" \
+                     --goal "Get the suite green on main" \
+                     --created-by codex-1 \
+                     --owner codex-1 --owner gemini-2 \
+                     --success "no quarantined tests" \
+                     --constraint "must run under 60s"
+omc-mam brief status --id fix-auth --namespace team-alpha \
+                     --status in-progress --by codex-1
+omc-mam brief get    --id fix-auth --namespace team-alpha
+
+# Presence
+omc-mam presence announce --namespace team-alpha --agent codex-1 \
+                          --provider codex --role executor \
+                          --focus "fixing flaky auth tests" --ttl 600
+omc-mam presence list     --namespace team-alpha
+
+# Shared memory (mirror of shared_memory_* MCP tools)
+omc-mam memory write --namespace team-alpha --key auth-spec --value '{"jwt":true}'
+omc-mam memory read  --namespace team-alpha --key auth-spec
+```
+
+Add `--json` to any command for structured output a script or another agent can parse.
 
 ---
 

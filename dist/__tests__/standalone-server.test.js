@@ -8,6 +8,8 @@ import { memoryTools } from '../tools/memory-tools.js';
 import { traceTools } from '../tools/trace-tools.js';
 import { sharedMemoryTools } from '../tools/shared-memory-tools.js';
 import { sharedContextTools } from '../tools/shared-context-tools.js';
+import { taskBriefTools } from '../tools/task-brief-tools.js';
+import { agentPresenceTools } from '../tools/agent-presence-tools.js';
 import { deepinitManifestTool } from '../tools/deepinit-manifest.js';
 import { wikiTools } from '../tools/wiki-tools.js';
 import { skillsTools } from '../tools/skills-tools.js';
@@ -24,15 +26,18 @@ describe('standalone-server tool composition', () => {
         ...traceTools,
         ...sharedMemoryTools,
         ...sharedContextTools,
+        ...taskBriefTools,
+        ...agentPresenceTools,
         deepinitManifestTool,
         ...wikiTools,
         ...skillsTools,
     ];
     it('should have at least the expected total tool count', () => {
         // 12 LSP + 2 AST + 1 python + 5 state + 6 notepad + 4 memory + 3 trace
-        // + 5 shared_memory + 6 shared_context + 1 deepinit + 7 wiki + 3 skills = 55 baseline.
+        // + 5 shared_memory + 6 shared_context + 6 task_brief + 4 agent_presence
+        // + 1 deepinit + 7 wiki + 3 skills = 65 baseline.
         // Use ≥ so this guard doesn't break when new tools are legitimately added.
-        expect(expectedTools.length).toBeGreaterThanOrEqual(55);
+        expect(expectedTools.length).toBeGreaterThanOrEqual(65);
     });
     it('should include 3 trace tools', () => {
         expect(traceTools).toHaveLength(3);
@@ -97,6 +102,32 @@ describe('standalone-server tool composition', () => {
     it('should include shared_context_open_questions tool', () => {
         const names = sharedContextTools.map(t => t.name);
         expect(names).toContain('shared_context_open_questions');
+    });
+    it('should include 6 task_brief tools', () => {
+        expect(taskBriefTools).toHaveLength(6);
+    });
+    it('should include task_brief_create tool', () => {
+        const names = taskBriefTools.map(t => t.name);
+        expect(names).toContain('task_brief_create');
+    });
+    it('should include task_brief_get tool', () => {
+        const names = taskBriefTools.map(t => t.name);
+        expect(names).toContain('task_brief_get');
+    });
+    it('should include task_brief_update_status tool', () => {
+        const names = taskBriefTools.map(t => t.name);
+        expect(names).toContain('task_brief_update_status');
+    });
+    it('should include 4 agent_presence tools', () => {
+        expect(agentPresenceTools).toHaveLength(4);
+    });
+    it('should include agent_presence_announce tool', () => {
+        const names = agentPresenceTools.map(t => t.name);
+        expect(names).toContain('agent_presence_announce');
+    });
+    it('should include agent_presence_list tool', () => {
+        const names = agentPresenceTools.map(t => t.name);
+        expect(names).toContain('agent_presence_list');
     });
     it('should include 3 skills tools', () => {
         expect(skillsTools).toHaveLength(3);

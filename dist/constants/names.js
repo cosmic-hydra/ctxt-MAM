@@ -28,6 +28,8 @@ export const TOOL_CATEGORIES = {
     GEMINI: 'gemini',
     SHARED_MEMORY: 'shared-memory',
     SHARED_CONTEXT: 'shared-context',
+    TASK_BRIEF: 'task-brief',
+    AGENT_PRESENCE: 'agent-presence',
     DEEPINIT: 'deepinit',
     WIKI: 'wiki',
 };

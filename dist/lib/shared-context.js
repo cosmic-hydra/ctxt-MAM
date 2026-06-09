@@ -38,6 +38,9 @@ import { getClaudeConfigDir } from '../utils/config-dir.js';
  * - `handoff`  — work is being passed to another agent/role
  * - `question` — a request for input from teammates
  * - `answer`   — a response to an earlier question (often via `refs`)
+ * - `plan`     — a proposed approach, posted for teammates to critique
+ *               before execution (lets agents share *how they think*
+ *               without committing to the approach yet)
  */
 export const CONTEXT_KINDS = [
     'note',
@@ -47,6 +50,7 @@ export const CONTEXT_KINDS = [
     'handoff',
     'question',
     'answer',
+    'plan',
 ];
 // ---------------------------------------------------------------------------
 // Config
@@ -300,7 +304,7 @@ export function digestChannel(namespace, highlightLimit = 5, worktreeRoot) {
     const entries = parseFeed(filePath);
     const limit = Math.min(Math.max(1, highlightLimit), 20);
     const byKind = {
-        note: 0, decision: 0, finding: 0, blocker: 0, handoff: 0, question: 0, answer: 0,
+        note: 0, decision: 0, finding: 0, blocker: 0, handoff: 0, question: 0, answer: 0, plan: 0,
     };
     const authorCounts = new Map();
     const answeredIds = new Set();
