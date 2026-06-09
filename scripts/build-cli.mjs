@@ -44,14 +44,31 @@ const teamConfig = {
   external: sharedExternal,
 };
 
+const mamOutfile = 'bridge/mam-cli.cjs';
+const mamConfig = {
+  entryPoints: ['src/cli/mam.ts'],
+  bundle: true,
+  platform: 'node',
+  target: 'node18',
+  format: 'cjs',
+  outfile: mamOutfile,
+  banner: {
+    js: '#!/usr/bin/env node',
+  },
+  external: sharedExternal,
+};
+
 if (watchMode) {
   const cliCtx = await esbuild.context(cliConfig);
   const teamCtx = await esbuild.context(teamConfig);
-  await Promise.all([cliCtx.watch(), teamCtx.watch()]);
-  console.log(`Watching ${outfile} and ${teamOutfile}...`);
+  const mamCtx = await esbuild.context(mamConfig);
+  await Promise.all([cliCtx.watch(), teamCtx.watch(), mamCtx.watch()]);
+  console.log(`Watching ${outfile}, ${teamOutfile}, and ${mamOutfile}...`);
 } else {
   await esbuild.build(cliConfig);
   console.log(`Built ${outfile}`);
   await esbuild.build(teamConfig);
   console.log(`Built ${teamOutfile}`);
+  await esbuild.build(mamConfig);
+  console.log(`Built ${mamOutfile}`);
 }

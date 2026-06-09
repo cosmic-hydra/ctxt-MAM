@@ -14,6 +14,9 @@ import { notepadTools } from "../tools/notepad-tools.js";
 import { memoryTools } from "../tools/memory-tools.js";
 import { traceTools } from "../tools/trace-tools.js";
 import { sharedMemoryTools } from "../tools/shared-memory-tools.js";
+import { sharedContextTools } from "../tools/shared-context-tools.js";
+import { taskBriefTools } from "../tools/task-brief-tools.js";
+import { agentPresenceTools } from "../tools/agent-presence-tools.js";
 import { getInteropTools } from "../interop/mcp-bridge.js";
 import { deepinitManifestTool } from "../tools/deepinit-manifest.js";
 import { wikiTools } from "../tools/wiki-tools.js";
@@ -41,6 +44,12 @@ export const DISABLE_TOOLS_GROUP_MAP = {
     'codex': TOOL_CATEGORIES.CODEX,
     'gemini': TOOL_CATEGORIES.GEMINI,
     'shared-memory': TOOL_CATEGORIES.SHARED_MEMORY,
+    'shared-context': TOOL_CATEGORIES.SHARED_CONTEXT,
+    'context-feed': TOOL_CATEGORIES.SHARED_CONTEXT,
+    'task-brief': TOOL_CATEGORIES.TASK_BRIEF,
+    'briefs': TOOL_CATEGORIES.TASK_BRIEF,
+    'agent-presence': TOOL_CATEGORIES.AGENT_PRESENCE,
+    'presence': TOOL_CATEGORIES.AGENT_PRESENCE,
     'deepinit': TOOL_CATEGORIES.DEEPINIT,
     'deepinit-manifest': TOOL_CATEGORIES.DEEPINIT,
     'wiki': TOOL_CATEGORIES.WIKI,
@@ -89,6 +98,9 @@ const allTools = [
     ...tagCategory(memoryTools, TOOL_CATEGORIES.MEMORY),
     ...tagCategory(traceTools, TOOL_CATEGORIES.TRACE),
     ...tagCategory(sharedMemoryTools, TOOL_CATEGORIES.SHARED_MEMORY),
+    ...tagCategory(sharedContextTools, TOOL_CATEGORIES.SHARED_CONTEXT),
+    ...tagCategory(taskBriefTools, TOOL_CATEGORIES.TASK_BRIEF),
+    ...tagCategory(agentPresenceTools, TOOL_CATEGORIES.AGENT_PRESENCE),
     { ...deepinitManifestTool, category: TOOL_CATEGORIES.DEEPINIT },
     ...tagCategory(wikiTools, TOOL_CATEGORIES.WIKI),
     ...interopTools,
@@ -121,7 +133,7 @@ export const omcToolNames = enabledTools.map(t => `mcp__t__${t.name}`);
 // Built from allTools so getOmcToolNames() category filtering works correctly
 const toolCategoryMap = new Map(allTools.map(t => [`mcp__t__${t.name}`, t.category]));
 function getExcludedCategories(options) {
-    const { includeLsp = true, includeAst = true, includePython = true, includeSkills = true, includeState = true, includeNotepad = true, includeMemory = true, includeTrace = true, includeInterop = true, includeSharedMemory = true, includeDeepinit = true, includeWiki = true, } = options || {};
+    const { includeLsp = true, includeAst = true, includePython = true, includeSkills = true, includeState = true, includeNotepad = true, includeMemory = true, includeTrace = true, includeInterop = true, includeSharedMemory = true, includeSharedContext = true, includeTaskBrief = true, includeAgentPresence = true, includeDeepinit = true, includeWiki = true, } = options || {};
     const excludedCategories = new Set();
     if (!includeLsp)
         excludedCategories.add(TOOL_CATEGORIES.LSP);
@@ -143,6 +155,12 @@ function getExcludedCategories(options) {
         excludedCategories.add(TOOL_CATEGORIES.INTEROP);
     if (!includeSharedMemory)
         excludedCategories.add(TOOL_CATEGORIES.SHARED_MEMORY);
+    if (!includeSharedContext)
+        excludedCategories.add(TOOL_CATEGORIES.SHARED_CONTEXT);
+    if (!includeTaskBrief)
+        excludedCategories.add(TOOL_CATEGORIES.TASK_BRIEF);
+    if (!includeAgentPresence)
+        excludedCategories.add(TOOL_CATEGORIES.AGENT_PRESENCE);
     if (!includeDeepinit)
         excludedCategories.add(TOOL_CATEGORIES.DEEPINIT);
     if (!includeWiki)

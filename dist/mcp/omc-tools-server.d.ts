@@ -47,6 +47,9 @@ interface ToolNameFilterOptions {
     includeTrace?: boolean;
     includeInterop?: boolean;
     includeSharedMemory?: boolean;
+    includeSharedContext?: boolean;
+    includeTaskBrief?: boolean;
+    includeAgentPresence?: boolean;
     includeDeepinit?: boolean;
     includeWiki?: boolean;
 }

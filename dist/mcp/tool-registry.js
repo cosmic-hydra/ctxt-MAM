@@ -23,6 +23,9 @@ import { notepadTools } from '../tools/notepad-tools.js';
 import { memoryTools } from '../tools/memory-tools.js';
 import { traceTools } from '../tools/trace-tools.js';
 import { sharedMemoryTools } from '../tools/shared-memory-tools.js';
+import { sharedContextTools } from '../tools/shared-context-tools.js';
+import { taskBriefTools } from '../tools/task-brief-tools.js';
+import { agentPresenceTools } from '../tools/agent-presence-tools.js';
 import { deepinitManifestTool } from '../tools/deepinit-manifest.js';
 import { wikiTools } from '../tools/wiki-tools.js';
 import { skillsTools } from '../tools/skills-tools.js';
@@ -37,6 +40,9 @@ export const allTools = [
     ...memoryTools,
     ...traceTools,
     ...sharedMemoryTools,
+    ...sharedContextTools,
+    ...taskBriefTools,
+    ...agentPresenceTools,
     deepinitManifestTool,
     ...wikiTools,
     ...skillsTools,

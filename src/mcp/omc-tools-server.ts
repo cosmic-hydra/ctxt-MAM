@@ -15,6 +15,9 @@ import { notepadTools } from "../tools/notepad-tools.js";
 import { memoryTools } from "../tools/memory-tools.js";
 import { traceTools } from "../tools/trace-tools.js";
 import { sharedMemoryTools } from "../tools/shared-memory-tools.js";
+import { sharedContextTools } from "../tools/shared-context-tools.js";
+import { taskBriefTools } from "../tools/task-brief-tools.js";
+import { agentPresenceTools } from "../tools/agent-presence-tools.js";
 import { getInteropTools } from "../interop/mcp-bridge.js";
 import { deepinitManifestTool } from "../tools/deepinit-manifest.js";
 import { wikiTools } from "../tools/wiki-tools.js";
@@ -53,6 +56,12 @@ export const DISABLE_TOOLS_GROUP_MAP: Record<string, ToolCategory> = {
   'codex': TOOL_CATEGORIES.CODEX,
   'gemini': TOOL_CATEGORIES.GEMINI,
   'shared-memory': TOOL_CATEGORIES.SHARED_MEMORY,
+  'shared-context': TOOL_CATEGORIES.SHARED_CONTEXT,
+  'context-feed': TOOL_CATEGORIES.SHARED_CONTEXT,
+  'task-brief': TOOL_CATEGORIES.TASK_BRIEF,
+  'briefs': TOOL_CATEGORIES.TASK_BRIEF,
+  'agent-presence': TOOL_CATEGORIES.AGENT_PRESENCE,
+  'presence': TOOL_CATEGORIES.AGENT_PRESENCE,
   'deepinit': TOOL_CATEGORIES.DEEPINIT,
   'deepinit-manifest': TOOL_CATEGORIES.DEEPINIT,
   'wiki': TOOL_CATEGORIES.WIKI,
@@ -103,6 +112,9 @@ const allTools: ToolDef[] = [
   ...tagCategory(memoryTools as unknown as ToolDef[], TOOL_CATEGORIES.MEMORY),
   ...tagCategory(traceTools as unknown as ToolDef[], TOOL_CATEGORIES.TRACE),
   ...tagCategory(sharedMemoryTools as unknown as ToolDef[], TOOL_CATEGORIES.SHARED_MEMORY),
+  ...tagCategory(sharedContextTools as unknown as ToolDef[], TOOL_CATEGORIES.SHARED_CONTEXT),
+  ...tagCategory(taskBriefTools as unknown as ToolDef[], TOOL_CATEGORIES.TASK_BRIEF),
+  ...tagCategory(agentPresenceTools as unknown as ToolDef[], TOOL_CATEGORIES.AGENT_PRESENCE),
   { ...(deepinitManifestTool as unknown as ToolDef), category: TOOL_CATEGORIES.DEEPINIT },
   ...tagCategory(wikiTools as unknown as ToolDef[], TOOL_CATEGORIES.WIKI),
   ...interopTools,
@@ -160,6 +172,9 @@ interface ToolNameFilterOptions {
   includeTrace?: boolean;
   includeInterop?: boolean;
   includeSharedMemory?: boolean;
+  includeSharedContext?: boolean;
+  includeTaskBrief?: boolean;
+  includeAgentPresence?: boolean;
   includeDeepinit?: boolean;
   includeWiki?: boolean;
 }
@@ -176,6 +191,9 @@ function getExcludedCategories(options?: ToolNameFilterOptions): Set<ToolCategor
     includeTrace = true,
     includeInterop = true,
     includeSharedMemory = true,
+    includeSharedContext = true,
+    includeTaskBrief = true,
+    includeAgentPresence = true,
     includeDeepinit = true,
     includeWiki = true,
   } = options || {};
@@ -191,6 +209,9 @@ function getExcludedCategories(options?: ToolNameFilterOptions): Set<ToolCategor
   if (!includeTrace) excludedCategories.add(TOOL_CATEGORIES.TRACE);
   if (!includeInterop) excludedCategories.add(TOOL_CATEGORIES.INTEROP);
   if (!includeSharedMemory) excludedCategories.add(TOOL_CATEGORIES.SHARED_MEMORY);
+  if (!includeSharedContext) excludedCategories.add(TOOL_CATEGORIES.SHARED_CONTEXT);
+  if (!includeTaskBrief) excludedCategories.add(TOOL_CATEGORIES.TASK_BRIEF);
+  if (!includeAgentPresence) excludedCategories.add(TOOL_CATEGORIES.AGENT_PRESENCE);
   if (!includeDeepinit) excludedCategories.add(TOOL_CATEGORIES.DEEPINIT);
   if (!includeWiki) excludedCategories.add(TOOL_CATEGORIES.WIKI);
   return excludedCategories;

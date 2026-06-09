@@ -26,6 +26,9 @@ export declare const TOOL_CATEGORIES: {
     readonly CODEX: "codex";
     readonly GEMINI: "gemini";
     readonly SHARED_MEMORY: "shared-memory";
+    readonly SHARED_CONTEXT: "shared-context";
+    readonly TASK_BRIEF: "task-brief";
+    readonly AGENT_PRESENCE: "agent-presence";
     readonly DEEPINIT: "deepinit";
     readonly WIKI: "wiki";
 };
