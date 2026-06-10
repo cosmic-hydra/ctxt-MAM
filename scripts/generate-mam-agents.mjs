@@ -14,7 +14,7 @@
  * directly). Edit the catalog modules, not the generated files.
  */
 
-import { readFileSync, writeFileSync, existsSync, readdirSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -41,19 +41,26 @@ const CORE_AGENTS = new Set([
 function validate(domains) {
   const errors = [];
   const seen = new Set();
+  if (!Array.isArray(domains)) {
+    return ['Domains catalog must be an array'];
+  }
   if (domains.length !== 20) {
     errors.push(`Expected 20 domains, got ${domains.length}`);
   }
   for (const d of domains) {
-    const ctx = `[${d?.domain ?? '?'}]`;
+    if (!d) {
+      errors.push('[?] null or undefined domain entry');
+      continue;
+    }
+    const ctx = `[${d.domain ?? '?'}]`;
     if (!d.domain || !NAME_RE.test(d.domain)) errors.push(`${ctx} invalid domain id`);
     if (!d.title) errors.push(`${ctx} missing title`);
     if (!d.summary) errors.push(`${ctx} missing summary`);
     if (!d.lead) errors.push(`${ctx} missing lead`);
     if (!Array.isArray(d.subagents) || d.subagents.length !== 10) {
-      errors.push(`${ctx} must have exactly 10 subagents, got ${d.subagents?.length ?? 0}`);
+      errors.push(`${ctx} must have exactly 10 subagents, got ${Array.isArray(d.subagents) ? d.subagents.length : 0}`);
     }
-    const agents = [d.lead, ...(d.subagents ?? [])].filter(Boolean);
+    const agents = [d.lead, ...(Array.isArray(d.subagents) ? d.subagents : [])].filter(Boolean);
     if (d.lead && d.lead.name !== `${d.domain}-lead`) {
       errors.push(`${ctx} lead must be named ${d.domain}-lead, got ${d.lead.name}`);
     }
@@ -397,6 +404,7 @@ if (checkMode) {
   let written = 0;
   for (const [path, content] of outputs) {
     if (!existsSync(path) || readFileSync(path, 'utf-8') !== content) {
+      mkdirSync(dirname(path), { recursive: true });
       writeFileSync(path, content);
       written++;
     }
