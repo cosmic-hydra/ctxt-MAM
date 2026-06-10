@@ -41,9 +41,24 @@ describe('Agent Registry Validation', () => {
             }
         }
     });
-    test('agent count matches documentation', () => {
+    // The MAM (multi-agent mesh) roster is a separate plugin-native layer:
+    // Claude Code discovers those subagents directly from `.md` frontmatter, so
+    // they intentionally do NOT go through the TS SDK registry
+    // (getAgentDefinitions). They are generated from agents/_registry/agents.json
+    // and carry an autogen marker; their own drift gate is agent-roster.test.ts.
+    // The core-agent assertions below scope to non-autogen prompt files only.
+    const MAM_AUTOGEN_MARKER = 'mam-roster: generated from agents/_registry/agents.json';
+    const coreAgentFiles = () => {
         const agentsDir = path.join(__dirname, '../../agents');
-        const promptFiles = fs.readdirSync(agentsDir).filter((file) => file.endsWith('.md') && file !== 'AGENTS.md');
+        return fs.readdirSync(agentsDir).filter((file) => {
+            if (!file.endsWith('.md') || file === 'AGENTS.md')
+                return false;
+            const content = fs.readFileSync(path.join(agentsDir, file), 'utf-8');
+            return !content.includes(MAM_AUTOGEN_MARKER);
+        });
+    };
+    test('agent count matches documentation', () => {
+        const promptFiles = coreAgentFiles();
         expect(promptFiles.length).toBe(19);
     });
     test('agent count is always 19 (no conditional agents)', () => {
@@ -58,8 +73,8 @@ describe('Agent Registry Validation', () => {
     });
     test('all agents have .md prompt files', () => {
         const agents = Object.keys(getAgentDefinitions());
-        const agentsDir = path.join(__dirname, '../../agents');
-        const promptFiles = fs.readdirSync(agentsDir).filter((file) => file.endsWith('.md') && file !== 'AGENTS.md');
+        // Scope to core agents — MAM roster files are plugin-native, not TS-registered.
+        const promptFiles = coreAgentFiles();
         for (const file of promptFiles) {
             const name = file.replace(/\.md$/, '');
             expect(agents, `Missing registry entry for agent: ${name}`).toContain(name);

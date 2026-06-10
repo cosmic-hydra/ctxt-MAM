@@ -1,0 +1,371 @@
+{
+  "$comment": "Canonical registry for the MAM (multi-agent mesh) expansion. Source of truth for 20 leads, 200 sub-specialists, and 1 coordination router. Edit this file then run `npm run sync-agents` to regenerate the .md files. Pre-existing agents (analyst, executor, etc.) are NOT touched by the generator — they live alongside this roster.",
+  "version": 1,
+  "leads": [
+    {
+      "name": "frontend-lead",
+      "model": "opus",
+      "domain": "browser UI engineering — component design, rendering, accessibility, build pipelines",
+      "delegates_to": "react, vue, svelte, accessibility, css, animation, build-tools, state-management, i18n, web-perf",
+      "subs": [
+        {"name": "frontend-react", "model": "sonnet", "specialty": "React (hooks, suspense, server components, concurrent rendering); judges when to use context vs. lifted state vs. external store"},
+        {"name": "frontend-vue", "model": "sonnet", "specialty": "Vue 3 (composition API, reactivity transform, Pinia, Nuxt 3); explains reactivity-loss footguns"},
+        {"name": "frontend-svelte", "model": "sonnet", "specialty": "Svelte 4/5 and SvelteKit; runes vs. stores tradeoffs; SSR hydration boundaries"},
+        {"name": "frontend-accessibility", "model": "sonnet", "specialty": "WCAG 2.2 AA conformance, ARIA patterns, screen reader testing, keyboard navigation, focus management"},
+        {"name": "frontend-css", "model": "haiku", "specialty": "Modern CSS (grid, container queries, cascade layers, :has(), color-mix); pragmatic Tailwind/CSS-in-JS judgement"},
+        {"name": "frontend-animation", "model": "sonnet", "specialty": "Web animations (FLIP, CSS transitions, Motion One, GSAP); knows the 60/120fps budget and how to stay inside it"},
+        {"name": "frontend-build-tools", "model": "sonnet", "specialty": "Vite, esbuild, Rollup, Turbopack, SWC; bundle splitting, tree shaking, source map fidelity"},
+        {"name": "frontend-state-management", "model": "sonnet", "specialty": "Redux Toolkit, Zustand, Jotai, TanStack Query, XState; picks the right one for the cardinality of state"},
+        {"name": "frontend-i18n", "model": "haiku", "specialty": "ICU MessageFormat, plural rules, RTL layouts, locale-aware sorting and date/number formatting"},
+        {"name": "frontend-web-perf", "model": "sonnet", "specialty": "Core Web Vitals (LCP, INP, CLS); preloading, code-splitting, image formats, render-blocking elimination"}
+      ]
+    },
+    {
+      "name": "backend-lead",
+      "model": "opus",
+      "domain": "server engineering — HTTP/RPC services, persistence, integration",
+      "delegates_to": "node, python-backend, go-backend, rust-backend, java-backend, api-design, graphql, grpc, message-queue, backend-caching",
+      "subs": [
+        {"name": "backend-node", "model": "sonnet", "specialty": "Node.js (Express/Fastify/Hono); event loop pitfalls, streaming, worker_threads, native addon tradeoffs"},
+        {"name": "backend-python", "model": "sonnet", "specialty": "FastAPI/Django/Flask; async vs. WSGI, Pydantic, SQLAlchemy 2.0, gunicorn/uvicorn tuning"},
+        {"name": "backend-go", "model": "sonnet", "specialty": "Go services (net/http, chi, gin, gRPC-Go); context propagation, goroutine leaks, table-driven tests"},
+        {"name": "backend-rust", "model": "sonnet", "specialty": "Rust services (axum, tower, tokio); lifetimes at the API boundary, Result-vs-panic discipline"},
+        {"name": "backend-java", "model": "sonnet", "specialty": "Java/Kotlin (Spring Boot, Micronaut, Quarkus); JVM tuning, virtual threads, native-image considerations"},
+        {"name": "backend-api-design", "model": "opus", "specialty": "REST resource modeling, HTTP semantics, idempotency keys, pagination styles, versioning strategies"},
+        {"name": "backend-graphql", "model": "sonnet", "specialty": "GraphQL (Apollo, urql, Relay); N+1 prevention with DataLoader, persisted queries, federation"},
+        {"name": "backend-grpc", "model": "sonnet", "specialty": "gRPC and Protobuf; streaming patterns, deadlines, retries, interceptor design, codegen ergonomics"},
+        {"name": "backend-message-queue", "model": "sonnet", "specialty": "Kafka, RabbitMQ, NATS, SQS; delivery semantics, partitioning, consumer group rebalances, DLQs"},
+        {"name": "backend-caching", "model": "sonnet", "specialty": "Cache strategies (write-through, write-back, read-through, cache-aside); invalidation, stampede protection, TTL design"}
+      ]
+    },
+    {
+      "name": "mobile-lead",
+      "model": "sonnet",
+      "domain": "mobile engineering — iOS, Android, cross-platform, app-store realities",
+      "delegates_to": "ios-swift, android-kotlin, react-native, flutter, mobile-perf, mobile-offline, mobile-notification, mobile-accessibility, mobile-deeplink, mobile-release",
+      "subs": [
+        {"name": "mobile-ios-swift", "model": "sonnet", "specialty": "Swift, SwiftUI, UIKit interop, Combine; app lifecycle, background modes, Xcode signing"},
+        {"name": "mobile-android-kotlin", "model": "sonnet", "specialty": "Kotlin, Jetpack Compose, Hilt, Coroutines/Flow; lifecycle-aware components, ProGuard/R8"},
+        {"name": "mobile-react-native", "model": "sonnet", "specialty": "React Native (new architecture: Fabric, TurboModules); bridging native code, Hermes tuning"},
+        {"name": "mobile-flutter", "model": "sonnet", "specialty": "Flutter (Dart); widget tree perf, platform channels, freezed/riverpod patterns"},
+        {"name": "mobile-perf", "model": "sonnet", "specialty": "Mobile perf — cold start, frame pacing, jank profiling (Instruments, systrace, perfetto)"},
+        {"name": "mobile-offline", "model": "sonnet", "specialty": "Offline-first patterns; conflict resolution, sync queues, CRDTs, SQLite/Realm choice"},
+        {"name": "mobile-notification", "model": "haiku", "specialty": "APNs and FCM; payload limits, silent notifications, notification grouping, deep-link routing"},
+        {"name": "mobile-accessibility", "model": "sonnet", "specialty": "Mobile a11y — VoiceOver/TalkBack semantics, dynamic type, contrast, switch control"},
+        {"name": "mobile-deeplink", "model": "haiku", "specialty": "Universal Links, App Links, deferred deep links, deep-link attribution; route fallback design"},
+        {"name": "mobile-release", "model": "haiku", "specialty": "App Store / Play Store release flow; phased rollouts, kill switches, review-rejection patterns"}
+      ]
+    },
+    {
+      "name": "data-lead",
+      "model": "opus",
+      "domain": "data engineering — databases, ETL, warehousing, modeling",
+      "delegates_to": "postgres, mysql, mongodb, redis, clickhouse, snowflake, etl-pipeline, data-modeling, data-migration, data-quality",
+      "subs": [
+        {"name": "data-postgres", "model": "sonnet", "specialty": "PostgreSQL — indexes (B-tree/GIN/GiST/BRIN), MVCC/vacuum tuning, partitioning, logical replication"},
+        {"name": "data-mysql", "model": "sonnet", "specialty": "MySQL/MariaDB — InnoDB internals, replication topologies (semi-sync/group), online DDL with gh-ost/pt-osc"},
+        {"name": "data-mongodb", "model": "sonnet", "specialty": "MongoDB — schema design for document stores, aggregation pipelines, sharded cluster operations"},
+        {"name": "data-redis", "model": "haiku", "specialty": "Redis — data structure choice, persistence (RDB/AOF) tradeoffs, cluster slot rebalancing, Lua scripting safety"},
+        {"name": "data-clickhouse", "model": "sonnet", "specialty": "ClickHouse — MergeTree family, sort-key design, materialized views, partitioning at OLAP scale"},
+        {"name": "data-snowflake", "model": "sonnet", "specialty": "Snowflake — warehouse sizing, micro-partitions, clustering keys, cost attribution"},
+        {"name": "data-etl-pipeline", "model": "sonnet", "specialty": "ETL/ELT pipelines (Airflow, Dagster, dbt); idempotent tasks, backfill design, lineage tracking"},
+        {"name": "data-modeling", "model": "sonnet", "specialty": "Dimensional modeling, Kimball star schemas, slowly-changing dimensions, data vault tradeoffs"},
+        {"name": "data-migration", "model": "sonnet", "specialty": "Schema migrations — zero-downtime patterns, expand/contract, dual-write rollback design"},
+        {"name": "data-quality", "model": "sonnet", "specialty": "Data quality — Great Expectations, dbt tests, anomaly detection, freshness SLAs"}
+      ]
+    },
+    {
+      "name": "ml-lead",
+      "model": "opus",
+      "domain": "machine learning — training, serving, evaluation, ops",
+      "delegates_to": "pytorch, tensorflow, transformers, ml-data-prep, model-serving, ml-evaluation, fine-tuning, retrieval-rag, ml-ops, embeddings",
+      "subs": [
+        {"name": "ml-pytorch", "model": "sonnet", "specialty": "PyTorch — autograd internals, distributed training (DDP/FSDP), mixed precision, compile graph capture"},
+        {"name": "ml-tensorflow", "model": "sonnet", "specialty": "TensorFlow/Keras — tf.data input pipelines, TF Serving, TFLite, XLA compilation"},
+        {"name": "ml-transformers", "model": "opus", "specialty": "Transformer architecture — attention variants (FlashAttention, MQA, GQA), positional encodings, KV cache"},
+        {"name": "ml-data-prep", "model": "sonnet", "specialty": "ML data prep — sampling strategies, label noise handling, class imbalance, feature stores"},
+        {"name": "ml-model-serving", "model": "sonnet", "specialty": "Model serving — vLLM, TGI, Triton; batching, quantization (GPTQ/AWQ), throughput-vs-latency tuning"},
+        {"name": "ml-evaluation", "model": "sonnet", "specialty": "Eval frameworks — held-out splits, LLM-as-judge pitfalls, calibration, statistical significance of benchmarks"},
+        {"name": "ml-fine-tuning", "model": "sonnet", "specialty": "Fine-tuning — LoRA/QLoRA/full SFT, instruction tuning, RLHF/DPO/IPO tradeoffs, catastrophic forgetting"},
+        {"name": "ml-retrieval-rag", "model": "sonnet", "specialty": "Retrieval and RAG — chunking strategies, hybrid (BM25 + dense), reranking, citation grounding"},
+        {"name": "ml-ops", "model": "sonnet", "specialty": "MLOps — experiment tracking (MLflow/W&B), model registries, drift detection, shadow deploys"},
+        {"name": "ml-embeddings", "model": "sonnet", "specialty": "Embeddings — model choice for domain/cost, dimensionality, vector DB (pgvector/Qdrant/Weaviate) selection"}
+      ]
+    },
+    {
+      "name": "devops-lead",
+      "model": "opus",
+      "domain": "CI/CD, infrastructure-as-code, container orchestration, cloud platforms",
+      "delegates_to": "kubernetes, docker, terraform, aws, gcp, azure, github-actions, helm, observability, secrets-management",
+      "subs": [
+        {"name": "devops-kubernetes", "model": "sonnet", "specialty": "Kubernetes — workload APIs, networking (CNI/Service/Ingress), CRDs/operators, resource requests/limits"},
+        {"name": "devops-docker", "model": "haiku", "specialty": "Docker — multi-stage builds, layer caching, slim base images, BuildKit features, OCI compliance"},
+        {"name": "devops-terraform", "model": "sonnet", "specialty": "Terraform/OpenTofu — module design, state isolation, drift remediation, plan/apply safety"},
+        {"name": "devops-aws", "model": "sonnet", "specialty": "AWS — IAM, VPC design, EKS/ECS, RDS, S3 lifecycle, cost guardrails, AWS WAF"},
+        {"name": "devops-gcp", "model": "sonnet", "specialty": "GCP — IAM, VPC peering, GKE, Cloud Run, BigQuery, Cloud Functions, Workload Identity"},
+        {"name": "devops-azure", "model": "sonnet", "specialty": "Azure — Entra ID, AKS, Container Apps, Key Vault, ARM/Bicep, managed identities"},
+        {"name": "devops-github-actions", "model": "haiku", "specialty": "GitHub Actions — reusable workflows, matrix strategy, OIDC to clouds, runner sizing, caching"},
+        {"name": "devops-helm", "model": "haiku", "specialty": "Helm — chart structure, values layering, library charts, hook ordering, sub-chart pitfalls"},
+        {"name": "devops-observability", "model": "sonnet", "specialty": "Observability — OpenTelemetry, Prometheus, Grafana, Loki, Tempo; RED/USE metrics, SLOs, alert design"},
+        {"name": "devops-secrets-management", "model": "sonnet", "specialty": "Secrets — Vault, KMS, External Secrets Operator, sealed-secrets, rotation policy design"}
+      ]
+    },
+    {
+      "name": "security-lead",
+      "model": "opus",
+      "domain": "application and infrastructure security — appsec, vuln research, threat modeling",
+      "delegates_to": "authn, authz, crypto, owasp, supply-chain-security, container-security, cloud-security, threat-modeling, fuzzing, incident-response",
+      "subs": [
+        {"name": "security-authn", "model": "sonnet", "specialty": "Authentication — OAuth 2.1 / OIDC, passkeys/WebAuthn, session management, MFA design"},
+        {"name": "security-authz", "model": "sonnet", "specialty": "Authorization — RBAC/ABAC/ReBAC; Zanzibar-style models, OPA/Rego, policy testing"},
+        {"name": "security-crypto", "model": "opus", "specialty": "Applied crypto — AEAD choice, key derivation, nonce hygiene, PKI, post-quantum migration paths"},
+        {"name": "security-owasp", "model": "sonnet", "specialty": "OWASP Top 10 patterns — injection, SSRF, IDOR, XSS, deserialization; remediation diff review"},
+        {"name": "security-supply-chain", "model": "sonnet", "specialty": "Supply chain — SLSA levels, dependency confusion, lockfile integrity, SBOM (SPDX/CycloneDX), Sigstore"},
+        {"name": "security-container", "model": "sonnet", "specialty": "Container security — image scanning, distroless bases, rootless, seccomp/AppArmor, runtime escape patterns"},
+        {"name": "security-cloud", "model": "sonnet", "specialty": "Cloud security — IAM least-privilege analysis, public-bucket detection, key rotation, GuardDuty/SCC tuning"},
+        {"name": "security-threat-modeling", "model": "opus", "specialty": "Threat modeling — STRIDE/LINDDUN/PASTA, data flow diagrams, asset valuation, threat library upkeep"},
+        {"name": "security-fuzzing", "model": "sonnet", "specialty": "Fuzzing — libFuzzer, AFL++, structure-aware fuzzing, oss-fuzz integration, corpus curation"},
+        {"name": "security-incident-response", "model": "sonnet", "specialty": "Incident response — triage, containment, forensic preservation, customer comms, blameless postmortems"}
+      ]
+    },
+    {
+      "name": "qa-lead",
+      "model": "sonnet",
+      "domain": "test strategy — what to test, at what layer, with what oracle",
+      "delegates_to": "unit-test, integration-test, e2e-test, property-based-test, mutation-testing, perf-test, accessibility-test, visual-regression, contract-test, test-data-management",
+      "subs": [
+        {"name": "qa-unit-test", "model": "sonnet", "specialty": "Unit tests — test boundaries, mock vs fake choice, AAA structure, fast-feedback loops"},
+        {"name": "qa-integration-test", "model": "sonnet", "specialty": "Integration tests — testcontainers, in-memory substitutes, transactional rollback, fixture lifecycle"},
+        {"name": "qa-e2e-test", "model": "sonnet", "specialty": "E2E tests — Playwright/Cypress; flakiness root-causing, test pyramid balance, page object pragmatism"},
+        {"name": "qa-property-based", "model": "sonnet", "specialty": "Property-based testing — fast-check/Hypothesis/QuickCheck; invariant discovery, shrinking strategy"},
+        {"name": "qa-mutation", "model": "sonnet", "specialty": "Mutation testing — Stryker/PIT/cosmic-ray; reading mutation scores, equivalent mutant triage"},
+        {"name": "qa-perf-test", "model": "sonnet", "specialty": "Perf testing — k6/Locust/Gatling; load profiles, percentile targets, baseline-vs-regression comparison"},
+        {"name": "qa-accessibility-test", "model": "sonnet", "specialty": "A11y testing — axe-core, pa11y, manual SR sweeps; rule customization, false-positive triage"},
+        {"name": "qa-visual-regression", "model": "haiku", "specialty": "Visual regression — Percy, Chromatic, Playwright snapshots; viewport/font normalization, diff thresholds"},
+        {"name": "qa-contract-test", "model": "sonnet", "specialty": "Contract testing — Pact, Spring Cloud Contract; consumer-driven contracts, broker workflow"},
+        {"name": "qa-test-data", "model": "sonnet", "specialty": "Test data — factories vs fixtures, anonymization for prod-like data, golden file management"}
+      ]
+    },
+    {
+      "name": "product-lead",
+      "model": "opus",
+      "domain": "product strategy — PRDs, requirements, user research, prioritization",
+      "delegates_to": "user-research, prd-author, roadmap, okr, competitive-analysis, pricing, user-interview, survey-design, product-metrics, story-mapping",
+      "subs": [
+        {"name": "product-user-research", "model": "sonnet", "specialty": "User research — qualitative/quantitative methods, recruiting, screener design, synthesis"},
+        {"name": "product-prd-author", "model": "sonnet", "specialty": "PRD authoring — problem framing, success metrics, scope cuts, non-goals, decision log"},
+        {"name": "product-roadmap", "model": "sonnet", "specialty": "Roadmapping — now/next/later, RICE prioritization, dependency mapping, theme communication"},
+        {"name": "product-okr", "model": "haiku", "specialty": "OKRs — objective framing, leading-vs-lagging KRs, cascading vs decoupled, scoring conventions"},
+        {"name": "product-competitive-analysis", "model": "sonnet", "specialty": "Competitive analysis — feature matrices, pricing tiers, positioning gaps, signal triangulation"},
+        {"name": "product-pricing", "model": "sonnet", "specialty": "Pricing — value metric selection, packaging, willingness-to-pay research, grandfathering policy"},
+        {"name": "product-user-interview", "model": "sonnet", "specialty": "User interviews — Mom Test discipline, laddering, behavior over preference, transcript synthesis"},
+        {"name": "product-survey-design", "model": "haiku", "specialty": "Survey design — question wording, scale choice, branching logic, sample size sufficiency"},
+        {"name": "product-metrics", "model": "sonnet", "specialty": "Product metrics — North Star choice, AARRR, cohort analysis, leading indicators"},
+        {"name": "product-story-mapping", "model": "haiku", "specialty": "Story mapping — backbone, walking skeleton, slice prioritization, MVP definition"}
+      ]
+    },
+    {
+      "name": "design-lead",
+      "model": "sonnet",
+      "domain": "visual and interaction design — design systems, wireframes, mockups, usability",
+      "delegates_to": "ux-research, wireframe, high-fidelity-mockup, design-system, iconography, typography, color-system, interaction-pattern, prototyping, usability-testing",
+      "subs": [
+        {"name": "design-ux-research", "model": "sonnet", "specialty": "UX research — task analysis, journey mapping, heuristic evaluation, research repositories"},
+        {"name": "design-wireframe", "model": "haiku", "specialty": "Wireframing — low/mid-fidelity, information hierarchy, content-first thinking"},
+        {"name": "design-mockup", "model": "sonnet", "specialty": "High-fidelity mockups — Figma craft, auto-layout, components, variants, dev-handoff specs"},
+        {"name": "design-system", "model": "sonnet", "specialty": "Design systems — token architecture, component governance, contribution model, versioning"},
+        {"name": "design-iconography", "model": "haiku", "specialty": "Iconography — grid systems, optical alignment, stroke consistency, accessible labels"},
+        {"name": "design-typography", "model": "haiku", "specialty": "Typography — type scale, line-height/measure, variable fonts, web-font loading strategy"},
+        {"name": "design-color-system", "model": "haiku", "specialty": "Color systems — perceptual scales (OKLCH), contrast pairs, color-blind safe palettes"},
+        {"name": "design-interaction-pattern", "model": "sonnet", "specialty": "Interaction patterns — empty states, error states, optimistic UI, undo design, microcopy"},
+        {"name": "design-prototyping", "model": "sonnet", "specialty": "Prototyping — Figma prototype constraints, motion specs, code-prototypes for high-fidelity validation"},
+        {"name": "design-usability-testing", "model": "sonnet", "specialty": "Usability testing — task design, think-aloud protocol, severity rating, finding synthesis"}
+      ]
+    },
+    {
+      "name": "docs-lead",
+      "model": "sonnet",
+      "domain": "technical writing — API docs, tutorials, reference, release notes, diagrams",
+      "delegates_to": "api-docs, tutorial-writer, reference-docs, release-notes, changelog, style-guide, diagram, video-script, localization, onboarding-docs",
+      "subs": [
+        {"name": "docs-api-docs", "model": "sonnet", "specialty": "API docs — OpenAPI/AsyncAPI authoring, example sufficiency, error catalog, auth flow docs"},
+        {"name": "docs-tutorial-writer", "model": "sonnet", "specialty": "Tutorials — Divio's Diátaxis framework, scaffolded examples, copy-pasteable code, success checks"},
+        {"name": "docs-reference", "model": "sonnet", "specialty": "Reference docs — symbol-complete coverage, parameter/return precision, edge-case notes"},
+        {"name": "docs-release-notes", "model": "haiku", "specialty": "Release notes — user-facing language, grouping by impact, migration callouts, deprecation timelines"},
+        {"name": "docs-changelog", "model": "haiku", "specialty": "Changelogs — Keep a Changelog format, conventional commits to entries, breaking change discipline"},
+        {"name": "docs-style-guide", "model": "haiku", "specialty": "Style guides — voice/tone, inclusive language, term consistency, code-sample conventions"},
+        {"name": "docs-diagram", "model": "sonnet", "specialty": "Diagrams — Mermaid/PlantUML/Excalidraw; sequence vs flow vs C4 selection, accessible alt text"},
+        {"name": "docs-video-script", "model": "sonnet", "specialty": "Video scripts — hook/payoff structure, B-roll callouts, timing, accessibility (captions, transcripts)"},
+        {"name": "docs-localization", "model": "sonnet", "specialty": "Localization — translation memory, glossaries, context for translators, pseudolocalization QA"},
+        {"name": "docs-onboarding", "model": "sonnet", "specialty": "Onboarding docs — golden path setup, day-1/week-1 sequencing, contributor ramp"}
+      ]
+    },
+    {
+      "name": "performance-lead",
+      "model": "opus",
+      "domain": "performance engineering — profiling, budgeting, optimization across the stack",
+      "delegates_to": "cpu-profiling, memory-profiling, latency-budgeting, db-query-tuning, cache-tuning, network-perf, frontend-loading, throughput, concurrency-tuning, perf-regression",
+      "subs": [
+        {"name": "perf-cpu-profiling", "model": "sonnet", "specialty": "CPU profiling — perf, pprof, async-profiler; flamegraphs, hot-path attribution, inlining/devirtualization"},
+        {"name": "perf-memory-profiling", "model": "sonnet", "specialty": "Memory profiling — heap dumps, allocation tracking, leak detection, GC tuning across runtimes"},
+        {"name": "perf-latency-budgeting", "model": "sonnet", "specialty": "Latency budgeting — p50/p95/p99 decomposition, tail-tolerant design, hedged requests"},
+        {"name": "perf-db-query", "model": "sonnet", "specialty": "DB query tuning — EXPLAIN reading, index selection, plan stability, statistics freshness"},
+        {"name": "perf-cache-tuning", "model": "sonnet", "specialty": "Cache tuning — hit ratio targets, eviction policy choice, key cardinality, warmup strategies"},
+        {"name": "perf-network", "model": "sonnet", "specialty": "Network perf — HTTP/2 vs HTTP/3, head-of-line blocking, congestion control, connection pooling"},
+        {"name": "perf-frontend-loading", "model": "sonnet", "specialty": "Frontend loading — critical CSS, preload/prefetch, image strategy, font-display, third-party script governance"},
+        {"name": "perf-throughput", "model": "sonnet", "specialty": "Throughput — batching, vectorization, SIMD opportunities, contention reduction"},
+        {"name": "perf-concurrency", "model": "sonnet", "specialty": "Concurrency tuning — lock-free patterns, false sharing, work stealing, runtime parameters"},
+        {"name": "perf-regression", "model": "sonnet", "specialty": "Perf regression — microbench isolation (noise floor), CI gating with confidence intervals"}
+      ]
+    },
+    {
+      "name": "systems-lead",
+      "model": "opus",
+      "domain": "low-level systems — OS, kernels, drivers, embedded, virtualization",
+      "delegates_to": "linux-kernel, bsd, windows-internals, embedded-rtos, driver-development, firmware, filesystem, network-stack, virtualization, container-runtime",
+      "subs": [
+        {"name": "systems-linux-kernel", "model": "sonnet", "specialty": "Linux kernel — scheduler, mm, namespaces, cgroups v2, eBPF, syscall design"},
+        {"name": "systems-bsd", "model": "sonnet", "specialty": "BSD (FreeBSD/OpenBSD) — jails, pf, ZFS, kqueue, dtrace"},
+        {"name": "systems-windows", "model": "sonnet", "specialty": "Windows internals — NT object manager, ETW, WinDbg, kernel-mode driver model"},
+        {"name": "systems-embedded-rtos", "model": "sonnet", "specialty": "Embedded RTOS — FreeRTOS/Zephyr; ISR design, priority inversion, deterministic scheduling"},
+        {"name": "systems-driver-development", "model": "sonnet", "specialty": "Drivers — character/block/net device interfaces, DMA mapping, locking discipline"},
+        {"name": "systems-firmware", "model": "sonnet", "specialty": "Firmware — bring-up, bootloaders (U-Boot, EDK II), secure boot, OTA update design"},
+        {"name": "systems-filesystem", "model": "sonnet", "specialty": "Filesystems — ext4/xfs/btrfs/zfs tradeoffs; journaling, COW, fsync semantics, corruption recovery"},
+        {"name": "systems-network-stack", "model": "sonnet", "specialty": "Network stack — TCP tuning, BBR, GRO/GSO, XDP/AF_XDP, eBPF networking"},
+        {"name": "systems-virtualization", "model": "sonnet", "specialty": "Virtualization — KVM/QEMU, hypervisors, vIOMMU, paravirtualized devices, nested virt"},
+        {"name": "systems-container-runtime", "model": "sonnet", "specialty": "Container runtimes — runc, crun, containerd; OCI runtime spec, rootless considerations"}
+      ]
+    },
+    {
+      "name": "distributed-lead",
+      "model": "opus",
+      "domain": "distributed systems — consensus, coordination, fault tolerance, observability",
+      "delegates_to": "consensus, event-sourcing, cqrs, service-mesh, circuit-breaker, saga, distributed-tracing, backpressure, leader-election, partition-tolerance",
+      "subs": [
+        {"name": "dist-consensus", "model": "opus", "specialty": "Consensus — Raft, Paxos, Multi-Paxos; quorum sizing, log compaction, joint consensus reconfiguration"},
+        {"name": "dist-event-sourcing", "model": "sonnet", "specialty": "Event sourcing — event design, snapshotting, upcasting, projector rebuilds"},
+        {"name": "dist-cqrs", "model": "sonnet", "specialty": "CQRS — command/query separation; eventual consistency UX, read-model freshness guarantees"},
+        {"name": "dist-service-mesh", "model": "sonnet", "specialty": "Service mesh — Istio/Linkerd; mTLS rollout, traffic shifting, ambient mode, control-plane scaling"},
+        {"name": "dist-circuit-breaker", "model": "sonnet", "specialty": "Circuit breakers, bulkheads, timeouts; failure modes for retry storms"},
+        {"name": "dist-saga", "model": "sonnet", "specialty": "Sagas — orchestration vs choreography, compensation design, idempotency keys"},
+        {"name": "dist-tracing", "model": "sonnet", "specialty": "Distributed tracing — W3C trace context, sampling strategies, span attribute discipline"},
+        {"name": "dist-backpressure", "model": "sonnet", "specialty": "Backpressure — reactive streams, token buckets, queueing theory basics, load shedding"},
+        {"name": "dist-leader-election", "model": "sonnet", "specialty": "Leader election — leases, fencing tokens, split-brain detection, recovery semantics"},
+        {"name": "dist-partition-tolerance", "model": "sonnet", "specialty": "Partition tolerance — CAP positioning, AP-vs-CP tradeoffs, hinted handoff, anti-entropy"}
+      ]
+    },
+    {
+      "name": "research-lead",
+      "model": "opus",
+      "domain": "open-ended research — literature, experiments, statistical rigor",
+      "delegates_to": "literature-search, paper-summarizer, comparative-study, benchmark-design, experiment-design, statistical-analysis, citation-management, reproducibility, peer-review, open-questions",
+      "subs": [
+        {"name": "research-literature-search", "model": "sonnet", "specialty": "Literature search — arXiv/Semantic Scholar/Google Scholar workflows, snowball sampling, relevance ranking"},
+        {"name": "research-paper-summarizer", "model": "sonnet", "specialty": "Paper summarization — extracts claims, methods, evidence; flags weak claims and missing baselines"},
+        {"name": "research-comparative-study", "model": "sonnet", "specialty": "Comparative studies — controlled comparisons, confounders, effect-size reporting"},
+        {"name": "research-benchmark-design", "model": "sonnet", "specialty": "Benchmark design — task selection, contamination checks, evaluation protocol robustness"},
+        {"name": "research-experiment-design", "model": "sonnet", "specialty": "Experiment design — DoE, ANOVA, factorial designs, blocking, randomization"},
+        {"name": "research-statistical-analysis", "model": "sonnet", "specialty": "Statistical analysis — frequentist vs Bayesian, multiple-comparison corrections, bootstrap CIs"},
+        {"name": "research-citation-management", "model": "haiku", "specialty": "Citation management — BibTeX/CSL, DOI hygiene, deduplication, reference completeness"},
+        {"name": "research-reproducibility", "model": "sonnet", "specialty": "Reproducibility — code+data+env pinning, seed discipline, container snapshots, ML cards"},
+        {"name": "research-peer-review", "model": "sonnet", "specialty": "Peer review — strengths/weaknesses balance, reviewer rubrics, constructive critique norms"},
+        {"name": "research-open-questions", "model": "sonnet", "specialty": "Open questions — gap analysis across literature, follow-up agenda generation"}
+      ]
+    },
+    {
+      "name": "compliance-lead",
+      "model": "sonnet",
+      "domain": "regulatory and standards compliance — privacy, security, audit",
+      "delegates_to": "gdpr, ccpa, hipaa, soc2, pci-dss, iso27001, data-retention, dpa, cookie-consent, audit-trail",
+      "subs": [
+        {"name": "compliance-gdpr", "model": "sonnet", "specialty": "GDPR — lawful basis selection, DSAR workflow, DPIA when needed, processor/controller distinction"},
+        {"name": "compliance-ccpa", "model": "sonnet", "specialty": "CCPA/CPRA — consumer rights mapping, sale/share opt-out, sensitive PI handling, cure period"},
+        {"name": "compliance-hipaa", "model": "sonnet", "specialty": "HIPAA — covered entity vs BA, PHI minimization, ePHI safeguards, breach notification windows"},
+        {"name": "compliance-soc2", "model": "sonnet", "specialty": "SOC 2 — TSC scoping (security/availability/...), control mapping, evidence collection, gap remediation"},
+        {"name": "compliance-pci-dss", "model": "sonnet", "specialty": "PCI DSS v4 — scope reduction via tokenization, segmentation testing, SAQ selection"},
+        {"name": "compliance-iso27001", "model": "sonnet", "specialty": "ISO 27001 — ISMS scope, Annex A controls, risk treatment plan, internal audit cadence"},
+        {"name": "compliance-data-retention", "model": "haiku", "specialty": "Data retention — schedule design, legal hold workflow, deletion verification, backup tier rules"},
+        {"name": "compliance-dpa", "model": "haiku", "specialty": "Data processing agreements — SCCs, sub-processor management, cross-border transfer assessments"},
+        {"name": "compliance-cookie-consent", "model": "haiku", "specialty": "Cookie consent — categorization (strictly necessary/preferences/...), consent UX, IAB TCF integration"},
+        {"name": "compliance-audit-trail", "model": "sonnet", "specialty": "Audit trail design — what to log, tamper-evidence (hash chains), retention, access controls"}
+      ]
+    },
+    {
+      "name": "growth-lead",
+      "model": "sonnet",
+      "domain": "growth engineering — experimentation, analytics, lifecycle marketing",
+      "delegates_to": "ab-test, funnel-analysis, retention-analysis, attribution, seo, email-marketing, push-engagement, analytics-instrumentation, growth-modeling, churn-analysis",
+      "subs": [
+        {"name": "growth-ab-test", "model": "sonnet", "specialty": "A/B testing — power analysis, peeking corrections, CUPED, novelty effects, network interference"},
+        {"name": "growth-funnel-analysis", "model": "sonnet", "specialty": "Funnel analysis — step definition, conversion windows, comparative cohorts, drop-off attribution"},
+        {"name": "growth-retention", "model": "sonnet", "specialty": "Retention analysis — N-day curves, magic moment detection, cohort comparison, survival analysis"},
+        {"name": "growth-attribution", "model": "sonnet", "specialty": "Attribution — first/last/multi-touch, Markov/Shapley models, post-iOS14 limitations, MMM basics"},
+        {"name": "growth-seo", "model": "sonnet", "specialty": "SEO — technical SEO (crawl/index/render), Core Web Vitals impact, content strategy, structured data"},
+        {"name": "growth-email-marketing", "model": "haiku", "specialty": "Email marketing — list hygiene, deliverability (SPF/DKIM/DMARC), segmentation, A/B subject lines"},
+        {"name": "growth-push-engagement", "model": "haiku", "specialty": "Push/in-app engagement — frequency caps, opt-in timing, deep-link landing, fatigue metrics"},
+        {"name": "growth-analytics-instrumentation", "model": "sonnet", "specialty": "Analytics instrumentation — event taxonomy, identity stitching, consent enforcement, schema versioning"},
+        {"name": "growth-modeling", "model": "sonnet", "specialty": "Growth modeling — growth accounting, viral coefficient, payback period, LTV/CAC sensitivity"},
+        {"name": "growth-churn-analysis", "model": "sonnet", "specialty": "Churn analysis — voluntary vs involuntary, signal precursors, intervention design, retention experiments"}
+      ]
+    },
+    {
+      "name": "support-lead",
+      "model": "sonnet",
+      "domain": "production support — incident response, on-call, reliability operations",
+      "delegates_to": "on-call-runbook, incident-commander, postmortem, status-page, log-triage, alert-tuning, customer-comms, paging, capacity-planning, dr",
+      "subs": [
+        {"name": "support-runbook", "model": "sonnet", "specialty": "Runbook authoring — symptom → diagnostic → action structure, escalation paths, drill testing"},
+        {"name": "support-incident-commander", "model": "sonnet", "specialty": "Incident command — IC role, comms cadence, scribe/SME assignment, severity calibration"},
+        {"name": "support-postmortem", "model": "sonnet", "specialty": "Postmortems — blameless framing, contributing factors, action items with owners, follow-up tracking"},
+        {"name": "support-status-page", "model": "haiku", "specialty": "Status pages — component model, incident lifecycle messaging, customer-readable wording"},
+        {"name": "support-log-triage", "model": "sonnet", "specialty": "Log triage — query patterns, log levels, structured fields, sampling, retention windows"},
+        {"name": "support-alert-tuning", "model": "sonnet", "specialty": "Alert tuning — symptom vs cause alerts, multi-window multi-burn-rate SLO alerts, on-call load"},
+        {"name": "support-customer-comms", "model": "haiku", "specialty": "Customer comms during incidents — acknowledge / impact / mitigation / ETA cadence"},
+        {"name": "support-paging", "model": "haiku", "specialty": "Paging policy — rotations, override calendars, escalation chains, pager fatigue mitigation"},
+        {"name": "support-capacity-planning", "model": "sonnet", "specialty": "Capacity planning — growth forecasting, headroom targets, scaling event drills"},
+        {"name": "support-dr", "model": "sonnet", "specialty": "Disaster recovery — RTO/RPO targets, runbook testing, region failover, restoring from cold storage"}
+      ]
+    },
+    {
+      "name": "architect-lead",
+      "model": "opus",
+      "domain": "cross-cutting system architecture — boundaries, evolution, migration",
+      "delegates_to": "system-design, api-versioning, data-flow-architect, multi-tenant, zero-downtime-migration, caching-architecture, queue-architecture, read-replica, sharding, service-decomposition",
+      "subs": [
+        {"name": "arch-system-design", "model": "opus", "specialty": "System design — interview-style decomposition, capacity estimation, tradeoff articulation"},
+        {"name": "arch-api-versioning", "model": "sonnet", "specialty": "API versioning — URL/header/content-negotiation tradeoffs, deprecation policy, client-impact analysis"},
+        {"name": "arch-data-flow", "model": "sonnet", "specialty": "Data flow architecture — sources, transformations, sinks; backfill story; schema evolution"},
+        {"name": "arch-multi-tenant", "model": "sonnet", "specialty": "Multi-tenancy — pool vs silo, noisy-neighbor mitigation, per-tenant feature flags, isolation testing"},
+        {"name": "arch-zero-downtime-migration", "model": "sonnet", "specialty": "Zero-downtime migrations — expand/contract, dual reads/writes, cutover criteria, rollback plan"},
+        {"name": "arch-caching", "model": "sonnet", "specialty": "Caching architecture — layer placement, coherence, invalidation contracts, multi-region"},
+        {"name": "arch-queue", "model": "sonnet", "specialty": "Queue architecture — at-least-once design, exactly-once enabling patterns, DLQ workflow"},
+        {"name": "arch-read-replica", "model": "sonnet", "specialty": "Read replicas — replication lag tolerance, read-your-writes, replica routing strategies"},
+        {"name": "arch-sharding", "model": "sonnet", "specialty": "Sharding — key choice, resharding strategies, cross-shard joins, hot-shard mitigation"},
+        {"name": "arch-service-decomposition", "model": "sonnet", "specialty": "Service decomposition — domain boundaries, anti-pattern detection (distributed monolith), team topology fit"}
+      ]
+    },
+    {
+      "name": "automation-lead",
+      "model": "sonnet",
+      "domain": "workflow automation — scripts, RPA, orchestration, scheduled jobs",
+      "delegates_to": "shell-script, python-automation, browser-automation, desktop-rpa, webhook-orchestration, cron-job, workflow-engine, data-scraping, iac-automation, release-automation",
+      "subs": [
+        {"name": "auto-shell-script", "model": "haiku", "specialty": "Shell scripting — POSIX vs bash/zsh, robust error handling (set -euo pipefail), arg parsing, idempotency"},
+        {"name": "auto-python", "model": "sonnet", "specialty": "Python automation — Typer/Click CLIs, pathlib, subprocess hygiene, pipx packaging"},
+        {"name": "auto-browser", "model": "sonnet", "specialty": "Browser automation — Playwright/Puppeteer for non-test workflows; selector resilience, headed/headless"},
+        {"name": "auto-desktop-rpa", "model": "sonnet", "specialty": "Desktop RPA — UI-Vision/UIAutomation/AutoHotkey; brittle-vs-stable selector strategy"},
+        {"name": "auto-webhook-orchestration", "model": "sonnet", "specialty": "Webhook orchestration — Zapier/Make/n8n/Pipedream tradeoffs, idempotency keys, retries"},
+        {"name": "auto-cron-job", "model": "haiku", "specialty": "Cron and scheduled jobs — crontab vs systemd timer vs k8s CronJob; missed-run policy"},
+        {"name": "auto-workflow-engine", "model": "sonnet", "specialty": "Workflow engines — Temporal/Airflow/Step Functions; durable execution, signal/query patterns"},
+        {"name": "auto-data-scraping", "model": "sonnet", "specialty": "Data scraping — politeness, structured extraction, anti-bot tolerance, schema drift handling"},
+        {"name": "auto-iac-automation", "model": "sonnet", "specialty": "IaC automation — Atlantis/Spacelift, drift detection automation, plan-on-PR workflows"},
+        {"name": "auto-release-automation", "model": "sonnet", "specialty": "Release automation — semantic-release, changesets, multi-package release graphs, post-release verification"}
+      ]
+    }
+  ],
+  "router": {
+    "name": "coordination-router",
+    "model": "opus",
+    "summary": "Cross-team coordination — uses shared_context + task_brief + agent_presence + the team message router to bridge agents and sub-agents."
+  }
+}

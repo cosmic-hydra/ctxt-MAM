@@ -28,6 +28,8 @@ Direct writes OK for: `~/.claude/**`, `.omc/**`, `.claude/**`, `CLAUDE.md`, `AGE
 Prefix: `oh-my-claudecode:`. See `agents/*.md` for full prompts.
 
 explore (haiku), analyst (opus), planner (opus), architect (opus), debugger (sonnet), executor (sonnet), verifier (sonnet), tracer (sonnet), security-reviewer (sonnet), code-reviewer (opus), test-engineer (sonnet), designer (sonnet), writer (haiku), qa-tester (sonnet), scientist (sonnet), document-specialist (sonnet), git-master (sonnet), code-simplifier (opus), critic (opus)
+
+MAM roster (domain mesh): 20 domain leads + 200 sub-specialists + `coordination-router`, generated from `agents/_registry/agents.json` (`npm run sync-agents`). Leads decompose+delegate; subs go deep; the router transfers work between teams. All coordinate via the mesh primitives (`shared_context_*`, `task_brief_*`, `agent_presence_*`, `omc-mam` CLI). Full list: `docs/AGENTS-ROSTER.md`.
 </agent_catalog>
 
 <tools>
