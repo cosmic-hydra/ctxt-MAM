@@ -1,0 +1,43 @@
+{
+  "version": "1.0",
+  "total_planned": 200,
+  "description": "Registry of planned and implemented subagents for the Subagent Swarm system in oh-my-claudecode. Enables discovery, matching, and dynamic orchestration.",
+  "scp_version": "1.0",
+  "categories": {
+    "efficiency": { "planned": 25, "implemented": 5 },
+    "verification": { "planned": 35, "implemented": 5 },
+    "communication": { "planned": 20, "implemented": 5 },
+    "research": { "planned": 30, "implemented": 3 },
+    "coding-micro": { "planned": 55, "implemented": 3 },
+    "meta-orchestration": { "planned": 20, "implemented": 4 },
+    "domain": { "planned": 15, "implemented": 0 }
+  },
+  "subagents": [
+    {"name": "context-compressor", "category": "efficiency", "specialization": "Compresses context while preserving critical information", "model": "haiku", "status": "implemented"},
+    {"name": "token-optimizer", "category": "efficiency", "specialization": "Minimizes token usage in prompts, outputs, and tool calls", "model": "haiku", "status": "planned"},
+    {"name": "redundancy-eliminator", "category": "efficiency", "specialization": "Detects and removes duplicate/redundant information across agents", "model": "sonnet", "status": "planned"},
+    {"name": "parallelism-finder", "category": "efficiency", "specialization": "Identifies opportunities for parallel subagent execution", "model": "sonnet", "status": "planned"},
+    {"name": "cost-estimator", "category": "efficiency", "specialization": "Estimates token/cost impact of tasks and suggests optimizations", "model": "haiku", "status": "planned"},
+    {"name": "hallucination-guard", "category": "verification", "specialization": "Detects potential hallucinations and flags low-confidence claims", "model": "sonnet", "status": "planned"},
+    {"name": "fact-checker", "category": "verification", "specialization": "Cross-verifies facts against codebase, docs, or external knowledge", "model": "sonnet", "status": "planned"},
+    {"name": "consistency-verifier", "category": "verification", "specialization": "Ensures consistency across multiple agent outputs and plans", "model": "sonnet", "status": "planned"},
+    {"name": "security-micro-auditor", "category": "verification", "specialization": "Performs narrow security checks on specific code patterns or changes", "model": "sonnet", "status": "planned"},
+    {"name": "test-gap-finder", "category": "verification", "specialization": "Identifies missing tests or coverage gaps for specific features", "model": "sonnet", "status": "planned"},
+    {"name": "handoff-negotiator", "category": "communication", "specialization": "Facilitates clean, structured handoffs between subagents", "model": "haiku", "status": "planned"},
+    {"name": "message-router", "category": "communication", "specialization": "Routes SCP messages to the correct recipient(s)", "model": "haiku", "status": "planned"},
+    {"name": "consensus-builder", "category": "communication", "specialization": "Builds consensus among multiple subagent opinions", "model": "sonnet", "status": "planned"},
+    {"name": "conflict-resolver", "category": "communication", "specialization": "Detects and resolves conflicts in plans or outputs", "model": "sonnet", "status": "planned"},
+    {"name": "blackboard-manager", "category": "communication", "specialization": "Manages shared state on the blackboard for cross-agent visibility", "model": "haiku", "status": "planned"},
+    {"name": "web-researcher", "category": "research", "specialization": "Performs targeted web/API research for specific technical questions", "model": "sonnet", "status": "planned"},
+    {"name": "codebase-miner", "category": "research", "specialization": "Deeply mines codebase for patterns, usages, and dependencies", "model": "sonnet", "status": "planned"},
+    {"name": "pattern-recognizer", "category": "research", "specialization": "Identifies recurring patterns and anti-patterns in code/design", "model": "sonnet", "status": "planned"},
+    {"name": "typescript-type-guard", "category": "coding-micro", "specialization": "Specialist in TypeScript type definitions, guards, and strict typing", "model": "sonnet", "status": "planned"},
+    {"name": "api-error-handler-specialist", "category": "coding-micro", "specialization": "Designs robust error handling for APIs and async operations", "model": "sonnet", "status": "planned"},
+    {"name": "task-decomposer", "category": "meta-orchestration", "specialization": "Breaks down high-level tasks into optimal subagent workflows", "model": "sonnet", "status": "planned"},
+    {"name": "agent-matcher", "category": "meta-orchestration", "specialization": "Matches tasks to the best available subagents based on expertise", "model": "haiku", "status": "planned"},
+    {"name": "swarm-coordinator", "category": "meta-orchestration", "specialization": "Orchestrates groups of subagents, manages parallelism and dependencies", "model": "sonnet", "status": "planned"},
+    {"name": "learning-extractor", "category": "meta-orchestration", "specialization": "Extracts reusable patterns and skills from completed swarm sessions", "model": "sonnet", "status": "planned"}
+  ],
+  "discovery_logic": "Subagents are discovered via registry.json or by scanning subagents/ directory. Orchestrator uses agent-matcher + specialization keywords for dynamic selection. SCP messages include 'from' for routing. Blackboard keys use task_id + subagent name.",
+  "notes": "This registry will be expanded to full 200 entries. Implemented ones have full .md definitions in subagents/. Planned ones are ready for generation via the generator script."
+}
