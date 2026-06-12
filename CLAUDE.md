@@ -27,7 +27,9 @@ Direct writes OK for: `~/.claude/**`, `.omc/**`, `.claude/**`, `CLAUDE.md`, `AGE
 <agent_catalog>
 Prefix: `oh-my-claudecode:`. See `agents/*.md` for full prompts.
 
-explore (haiku), analyst (opus), planner (opus), architect (opus), debugger (sonnet), executor (sonnet), verifier (sonnet), tracer (sonnet), security-reviewer (sonnet), code-reviewer (opus), test-engineer (sonnet), designer (sonnet), writer (haiku), qa-tester (sonnet), scientist (sonnet), document-specialist (sonnet), git-master (sonnet), code-simplifier (opus), critic (opus)
+Core (19): explore (haiku), analyst (opus), planner (opus), architect (opus), debugger (sonnet), executor (sonnet), verifier (sonnet), tracer (sonnet), security-reviewer (sonnet), code-reviewer (opus), test-engineer (sonnet), designer (sonnet), writer (haiku), qa-tester (sonnet), scientist (sonnet), document-specialist (sonnet), git-master (sonnet), code-simplifier (opus), critic (opus)
+
+MAM mesh (220): 20 domain leads (`frontend-lead`, `backend-lead`, `database-lead`, `data-platform-lead`, `ml-lead`, `mobile-lead`, `devops-lead`, `cloud-lead`, `security-lead`, `quality-lead`, `performance-lead`, `observability-lead`, `api-lead`, `architecture-lead`, `refactoring-lead`, `debugging-lead`, `docs-lead`, `research-lead`, `product-lead`, `release-lead`), each commanding 10 specialists named `<domain>-<specialty>` plus a haiku read-only `<domain>-scout`. Route domain-shaped work to the lead; spawn a single specialist directly only when the task is exactly its charter. Coordination fabric: shared-context channels `mam-<domain>` + `mam-mesh`, task briefs, presence beacons. Catalog source of truth: `scripts/mam-catalog/` (regenerate via `node scripts/generate-mam-agents.mjs`); full docs: `docs/MAM-AGENTS.md`.
 </agent_catalog>
 
 <tools>
