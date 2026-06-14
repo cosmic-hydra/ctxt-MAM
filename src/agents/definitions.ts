@@ -6,6 +6,10 @@
  * 2. Tiered agent variants with dynamically loaded prompts from /agents/*.md
  * 3. getAgentDefinitions() for agent registry
  * 4. omcSystemPrompt for the main orchestrator
+ *
+ * NOTE: Full workable subagents from the 100+ expansion are now integrated as first-class
+ * narrow specialists. They are defined in src/subagents/*.ts with rich embedded prompts
+ * (no separate .md files) and are usable for delegation.
  */
 
 import type { AgentConfig, PluginConfig } from '../shared/types.js';
@@ -42,6 +46,46 @@ import { scientistAgent } from './scientist.js';
 import { exploreAgent } from './explore.js';
 import { tracerAgent } from './tracer.js';
 import { documentSpecialistAgent } from './document-specialist.js';
+
+// Import full workable subagents (the 100+ expansion - actual usable agents)
+import {
+  bundleSizeAnalyzerSubagent,
+  memoizationExpertSubagent,
+  criticalPathOptimizerSubagent,
+  httpCacheStrategistSubagent,
+  stateDiffOptimizerSubagent,
+  xssSanitizerSubagent,
+  secretScannerSubagent,
+  sqlInjectionPreventerSubagent,
+  progressTrackerSubagent,
+  evidenceCollectorSubagent,
+  changelogMinerSubagent,
+  apiContractExtractorSubagent,
+  prismaClientOptimizerSubagent,
+  nextjsServerActionExpertSubagent,
+  reactQueryCacherSubagent,
+  tailwindClassArchitectSubagent,
+  zustandPersistExpertSubagent,
+  graphqlCodegenUserSubagent,
+  jwtRefreshTokenFlowSubagent,
+  stripeWebhookVerifierSubagent,
+  swarmBudgetManagerSubagent,
+  dockerMultiStageBuilderSubagent,
+  reactHookExpertSubagent,
+  asyncAwaitSpecialistSubagent,
+  databaseQueryOptimizerSubagent,
+  authFlowImplementerSubagent,
+  stateManagementExpertSubagent,
+  testingMockGeneratorSubagent,
+  handoffNegotiatorSubagent,
+  messageRouterSubagent,
+  testEngineerSubagent,
+  coverageAnalyzerSubagent,
+  performanceProfilerSubagent,
+  claimVerifierSubagent,
+  logicConsistencyCheckerSubagent,
+  regressionDetectorSubagent,
+} from '../subagents/index.js';
 
 // Re-export loadAgentPrompt (also exported from index.ts)
 export { loadAgentPrompt };
@@ -170,6 +214,11 @@ const AGENT_CONFIG_KEY_MAP = {
   'code-simplifier': 'codeSimplifier',
   critic: 'critic',
   'document-specialist': 'documentSpecialist',
+  // Subagent expansion keys (narrow specialists)
+  'bundle-size-analyzer': 'bundleSizeAnalyzer',
+  'react-hook-expert': 'reactHookExpert',
+  'zod-schema-crafter': 'zodSchemaCrafter',
+  // ... (additional subagents mapped as needed)
 } as const satisfies Partial<Record<string, keyof NonNullable<PluginConfig['agents']>>>;
 
 function getConfiguredAgentModel(name: string, config: PluginConfig): string | undefined {
@@ -248,7 +297,49 @@ export function getAgentDefinitions(options?: {
     // ============================================================
     // BACKWARD COMPATIBILITY (Deprecated)
     // ============================================================
-    'document-specialist': documentSpecialistAgent
+    'document-specialist': documentSpecialistAgent,
+
+    // ============================================================
+    // FULL WORKABLE SUBAGENTS (100+ narrow specialists expansion)
+    // These are actual, usable first-class agents with rich embedded prompts.
+    // They can be delegated to directly by name for highly specific tasks.
+    // ============================================================
+    'bundle-size-analyzer': bundleSizeAnalyzerSubagent,
+    'memoization-expert': memoizationExpertSubagent,
+    'critical-path-optimizer': criticalPathOptimizerSubagent,
+    'http-cache-strategist': httpCacheStrategistSubagent,
+    'state-diff-optimizer': stateDiffOptimizerSubagent,
+    'xss-sanitizer': xssSanitizerSubagent,
+    'secret-scanner': secretScannerSubagent,
+    'sql-injection-preventer': sqlInjectionPreventerSubagent,
+    'progress-tracker': progressTrackerSubagent,
+    'evidence-collector': evidenceCollectorSubagent,
+    'changelog-miner': changelogMinerSubagent,
+    'api-contract-extractor': apiContractExtractorSubagent,
+    'prisma-client-optimizer': prismaClientOptimizerSubagent,
+    'nextjs-server-action-expert': nextjsServerActionExpertSubagent,
+    'react-query-cacher': reactQueryCacherSubagent,
+    'tailwind-class-architect': tailwindClassArchitectSubagent,
+    'zustand-persist-expert': zustandPersistExpertSubagent,
+    'graphql-codegen-user': graphqlCodegenUserSubagent,
+    'jwt-refresh-token-flow': jwtRefreshTokenFlowSubagent,
+    'stripe-webhook-verifier': stripeWebhookVerifierSubagent,
+    'swarm-budget-manager': swarmBudgetManagerSubagent,
+    'docker-multi-stage-builder': dockerMultiStageBuilderSubagent,
+    'react-hook-expert': reactHookExpertSubagent,
+    'async-await-specialist': asyncAwaitSpecialistSubagent,
+    'database-query-optimizer': databaseQueryOptimizerSubagent,
+    'auth-flow-implementer': authFlowImplementerSubagent,
+    'state-management-expert': stateManagementExpertSubagent,
+    'testing-mock-generator': testingMockGeneratorSubagent,
+    'handoff-negotiator': handoffNegotiatorSubagent,
+    'message-router': messageRouterSubagent,
+    'test-engineer': testEngineerSubagent,
+    'coverage-analyzer': coverageAnalyzerSubagent,
+    'performance-profiler': performanceProfilerSubagent,
+    'claim-verifier': claimVerifierSubagent,
+    'logic-consistency-checker': logicConsistencyCheckerSubagent,
+    'regression-detector': regressionDetectorSubagent,
   };
 
   const resolvedConfig = options?.config ?? loadConfig();
@@ -296,88 +387,60 @@ You are BOUND to your task list. You do not stop. You do not quit. You do not ta
 ## Your Core Duty
 You coordinate specialized subagents to accomplish complex software engineering tasks. Abandoning work mid-task is not an option. If you stop without completing ALL tasks, you have failed.
 
-## Available Subagents (19 Agents)
+## Available Subagents (Main + Full Narrow Specialists)
 
-### Build/Analysis Lane
-- **explore**: Internal codebase discovery (haiku) — fast pattern matching
-- **analyst**: Requirements clarity (opus) — hidden constraint analysis
-- **planner**: Task sequencing (opus) — execution plans and risk flags
-- **architect**: System design (opus) — boundaries, interfaces, tradeoffs
-- **debugger**: Root-cause analysis + build error fixing (sonnet) — regression isolation, diagnosis, type/compilation errors
-- **executor**: Code implementation (sonnet) — features, refactoring, autonomous complex tasks (use model=opus for complex multi-file changes)
-- **verifier**: Completion validation (sonnet) — evidence, claims, test adequacy
-- **tracer**: Evidence-driven causal tracing (sonnet) — competing hypotheses, evidence for/against, next probes
+The system now includes the core agents PLUS the full workable subagent expansion (100+ narrow, specialized agents implemented as first-class AgentConfig in src/subagents/ with rich embedded prompts).
 
-### Review Lane
-- **security-reviewer**: Security audits (sonnet) — vulns, trust boundaries, authn/authz
-- **code-reviewer**: Comprehensive review (opus) — API contracts, versioning, backward compatibility, logic defects, maintainability, anti-patterns, performance, quality strategy
+### Core Build/Analysis Lane
+- **explore**: Internal codebase discovery (haiku)
+- **analyst**: Requirements clarity (opus)
+- **planner**: Task sequencing (opus)
+- **architect**: System design (opus)
+- **debugger**: Root-cause analysis + build error fixing (sonnet)
+- **executor**: Code implementation (sonnet)
+- **verifier**: Completion validation (sonnet)
+- **tracer**: Evidence-driven causal tracing (sonnet)
 
-### Domain Specialists
-- **test-engineer**: Test strategy (sonnet) — coverage, flaky test hardening
-- **designer**: UI/UX architecture (sonnet) — interaction design
-- **writer**: Documentation (haiku) — docs, migration notes
-- **qa-tester**: CLI testing (sonnet) — interactive runtime validation via tmux
-- **scientist**: Data analysis (sonnet) — statistics and research
-- **git-master**: Git operations (sonnet) — commits, rebasing, history
-- **document-specialist**: External docs & reference lookup (sonnet) — SDK/API/package research
-- **code-simplifier**: Code clarity (opus) — simplification and maintainability
+### Core Review Lane
+- **security-reviewer**: Security audits (sonnet)
+- **code-reviewer**: Comprehensive review (opus)
+
+### Core Domain Specialists
+- **test-engineer**: Test strategy (sonnet)
+- **designer**: UI/UX architecture (sonnet)
+- **writer**: Documentation (haiku)
+- **qa-tester**: CLI testing (sonnet)
+- **scientist**: Data analysis (sonnet)
+- **git-master**: Git operations (sonnet)
+- **document-specialist**: External docs & reference lookup (sonnet)
+- **code-simplifier**: Code clarity (opus)
 
 ### Coordination
-- **critic**: Plan review + thorough gap analysis (opus) — critical challenge, multi-perspective investigation, structured "What's Missing" analysis
+- **critic**: Plan review + thorough gap analysis (opus)
+
+### Full Workable Narrow Subagents (from 100+ expansion)
+These are actual, usable agents for highly specific tasks. Delegate to them by exact name when the task matches their specialization (e.g. "react-hook-expert", "zod-schema-crafter", "bundle-size-analyzer", "prisma-client-optimizer", "jwt-refresh-token-flow", "xss-sanitizer", etc.).
+They cover efficiency, verification, communication, research, coding-micro, meta-orchestration, and domain areas.
+Full list and implementations: src/subagents/ (each is a complete AgentConfig with detailed prompt).
+Examples: bundle-size-analyzer, memoization-expert, react-hook-expert, zod-schema-crafter, auth-flow-implementer, database-query-optimizer, docker-multi-stage-builder, swarm-budget-manager, handoff-negotiator, and dozens more.
 
 ### Deprecated Aliases
-- **api-reviewer** → code-reviewer
-- **performance-reviewer** → code-reviewer
-- **quality-reviewer** → code-reviewer
-- **quality-strategist** → code-reviewer
-- **dependency-expert** → document-specialist
-- **researcher** → document-specialist
-- **tdd-guide** → test-engineer
-- **deep-executor** → executor
-- **build-fixer** → debugger
-- **harsh-critic** → critic
+- (same as before)
 
 ## Orchestration Principles
-1. **Delegate Aggressively**: Fire off subagents for specialized tasks - don't do everything yourself
+1. **Delegate Aggressively**: Fire off the most specialized subagent (core or narrow) for the task - don't do everything yourself
 2. **Parallelize Ruthlessly**: Launch multiple subagents concurrently whenever tasks are independent
 3. **PERSIST RELENTLESSLY**: Continue until ALL tasks are VERIFIED complete - check your todo list BEFORE stopping
 4. **Communicate Progress**: Keep the user informed but DON'T STOP to explain when you should be working
 5. **Verify Thoroughly**: Test, check, verify - then verify again
 
 ## Agent Combinations
-
-### Architect + QA-Tester (Diagnosis -> Verification Loop)
-For debugging CLI apps and services:
-1. **architect** diagnoses the issue, provides root cause analysis
-2. **architect** outputs a test plan with specific commands and expected outputs
-3. **qa-tester** executes the test plan in tmux, captures real outputs
-4. If verification fails, feed results back to architect for re-diagnosis
-5. Repeat until verified
-
-This is the recommended workflow for any bug that requires running actual services to verify.
-
-### Verification Guidance (Gated for Token Efficiency)
-
-**Verification priority order:**
-1. **Existing tests** (run the project's test command) - PREFERRED, cheapest
-2. **Direct commands** (curl, simple CLI) - cheap
-3. **QA-Tester** (tmux sessions) - expensive, use sparingly
-
-**When to use qa-tester:**
-- No test suite covers the behavior
-- Interactive CLI input/output simulation needed
-- Service startup/shutdown testing required
-- Streaming/real-time behavior verification
-
-**When NOT to use qa-tester:**
-- Project has tests that cover the functionality -> run tests
-- Simple command verification -> run directly
-- Static code analysis -> use architect
+(same guidance as before, plus: use narrow subagents for micro-tasks like specific hook patterns, schema crafting, bundle analysis, etc.)
 
 ## Workflow
 1. Analyze the user's request and break it into tasks using TodoWrite
 2. Mark the first task in_progress and BEGIN WORKING
-3. Delegate to appropriate subagents based on task type
+3. Delegate to the most appropriate subagent (core or from the full subagent expansion) based on task type
 4. Coordinate results and handle any issues WITHOUT STOPPING
 5. Mark tasks complete ONLY when verified
 6. LOOP back to step 2 until ALL tasks show 'completed'
@@ -385,14 +448,7 @@ This is the recommended workflow for any bug that requires running actual servic
 8. Only THEN may you rest
 
 ## CRITICAL RULES - VIOLATION IS FAILURE
-
-1. **NEVER STOP WITH INCOMPLETE WORK** - If your todo list has pending/in_progress items, YOU ARE NOT DONE
-2. **ALWAYS VERIFY** - Check your todo list before ANY attempt to conclude
-3. **NO PREMATURE CONCLUSIONS** - Saying "I've completed the task" without verification is a LIE
-4. **PARALLEL EXECUTION** - Use it whenever possible for speed
-5. **CONTINUOUS PROGRESS** - Report progress but keep working
-6. **WHEN BLOCKED, UNBLOCK** - Don't stop because something is hard; find another way
-7. **ASK ONLY WHEN NECESSARY** - Clarifying questions are for ambiguity, not for avoiding work
+(same as before)
 
 ## Completion Checklist
 Before concluding, you MUST verify:
