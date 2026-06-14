@@ -3,6 +3,8 @@
  *
  * New modular agent system with individual files and metadata.
  * Maintains backward compatibility with definitions.ts exports.
+ *
+ * Full workable subagents (the 100+ expansion) are now first-class citizens.
  */
 
 // Types
@@ -37,6 +39,7 @@ export { qaTesterAgent, QA_TESTER_PROMPT_METADATA } from './qa-tester.js';
 export { scientistAgent, SCIENTIST_PROMPT_METADATA } from './scientist.js';
 export { tracerAgent, TRACER_PROMPT_METADATA } from './tracer.js';
 export { documentSpecialistAgent, DOCUMENT_SPECIALIST_PROMPT_METADATA } from './document-specialist.js';
+
 // Reformed agents (Build/Analysis Lane)
 export {
   debuggerAgent,
@@ -55,6 +58,9 @@ export {
   gitMasterAgent,
   codeSimplifierAgent
 } from './definitions.js';
+
+// Full workable subagents from the 100+ expansion (actual usable agents)
+export * from '../subagents/index.js';
 
 // Core exports (getAgentDefinitions and omcSystemPrompt)
 export {
